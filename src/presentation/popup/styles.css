@@ -1,0 +1,49 @@
+:root {
+  --bg: #ffffff;
+  --fg: #111827;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --accent: #2563eb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  width: 360px;
+  font: 14px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+.tz { padding: 14px; }
+.tz-loading { padding: 24px; text-align: center; color: var(--muted); }
+.tz-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.tz-head h1 { font-size: 16px; margin: 0; }
+.tz-tagline { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.tz-link {
+  border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 12px; padding: 2px;
+}
+.tz-site {
+  margin: 10px 0; font-size: 12px; color: var(--muted); word-break: break-all;
+}
+.tz-overall {
+  display: flex; justify-content: space-between; align-items: center;
+  color: #fff; padding: 10px 12px; border-radius: 10px; margin-bottom: 10px;
+}
+.tz-overall span { font-size: 12px; opacity: 0.9; }
+.tz-overall strong { font-size: 15px; }
+.tz-primary {
+  width: 100%; padding: 10px; border: 0; border-radius: 10px;
+  background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;
+}
+.tz-primary:disabled { opacity: 0.6; cursor: default; }
+.tz h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 16px 0 6px; }
+.tz-summary { margin: 0; padding-left: 18px; }
+.tz-summary li { margin: 3px 0; }
+.tz-frameworks, .tz-flags { list-style: none; margin: 0; padding: 0; }
+.tz-frameworks li { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.tz-pill { color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 999px; }
+.tz-flags li { padding: 4px 0 4px 18px; position: relative; }
+.tz-flags li::before { content: '⚠'; position: absolute; left: 0; }
+.tz-muted { color: var(--muted); font-size: 13px; }
+.tz-error { color: #dc2626; font-size: 13px; }
+.tz-foot { margin-top: 14px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+.tz-hint { margin-top: 10px; font-size: 12px; background: #f3f4f6; padding: 8px 10px; border-radius: 8px; color: #374151; }
