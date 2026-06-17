@@ -9,9 +9,13 @@ export interface FrameworkScore {
   readonly rationale: string;
 }
 
-/** Records which engine produced the scores: an LLM, or heuristics only. */
+/**
+ * Records which engine produced the scores.
+ * 'hub' means the result was fetched from the community cache rather than
+ * produced locally; provider/model reflect the original analysis.
+ */
 export interface AnalysisProvenance {
-  readonly mode: 'llm' | 'heuristic';
+  readonly mode: 'llm' | 'heuristic' | 'hub';
   readonly provider: ProviderId | null;
   readonly model: string | null;
 }

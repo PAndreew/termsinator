@@ -88,6 +88,27 @@ export function App() {
         <span>{t('options.alwaysRefresh')}</span>
       </label>
 
+      <label class="tz-check">
+        <input
+          type="checkbox"
+          checked={settings.shareAnalyses}
+          onChange={(e) => patch({ shareAnalyses: e.currentTarget.checked })}
+        />
+        <span>{t('options.shareAnalyses')}</span>
+      </label>
+      {settings.shareAnalyses && (
+        <label class="tz-field">
+          <span>{t('options.hubUrl')}</span>
+          <input
+            type="url"
+            placeholder={t('options.hubUrlPlaceholder')}
+            value={settings.hubUrl ?? ''}
+            onInput={(e) => patch({ hubUrl: e.currentTarget.value.trim() || null })}
+          />
+          <small class="tz-muted">{t('options.shareAnalysesHint')}</small>
+        </label>
+      )}
+
       <label class="tz-field">
         <span>{t('options.maxTokens')}</span>
         <input

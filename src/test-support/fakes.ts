@@ -22,6 +22,8 @@ import type {
   LlmAnalyzer,
   LlmAnalyzerFactory,
 } from '../domain/ports/analysis';
+import type { HubClient, HubLookupResult } from '../domain/ports/hub';
+import type { RiskAssessment } from '../domain/entities/risk-assessment';
 import type { Clock, Logger, Notifier, ToastRequest } from '../domain/ports/platform';
 
 export class InMemoryAssessmentRepository implements AssessmentRepository {
@@ -138,5 +140,21 @@ export class RecordingNotifier implements Notifier {
   readonly toasts: ToastRequest[] = [];
   async toast(request: ToastRequest): Promise<void> {
     this.toasts.push(request);
+  }
+}
+
+export class FakeHubClient implements HubClient {
+  public lookupCalls: { origin: string; termsHash: string }[] = [];
+  public submitCalls: { origin: string; termsHash: string; assessment: RiskAssessment }[] = [];
+
+  constructor(private readonly stubResult: HubLookupResult | null = null) {}
+
+  async lookup(origin: string, termsHash: string): Promise<HubLookupResult | null> {
+    this.lookupCalls.push({ origin, termsHash });
+    return this.stubResult;
+  }
+
+  async submit(origin: string, termsHash: string, assessment: RiskAssessment): Promise<void> {
+    this.submitCalls.push({ origin, termsHash, assessment });
   }
 }

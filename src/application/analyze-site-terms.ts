@@ -4,16 +4,18 @@ import type { Language } from '../domain/value-objects/language';
 import { Language as Lang } from '../domain/value-objects/language';
 import type { TermsDocument } from '../domain/entities/terms-document';
 import type { SiteAssessment } from '../domain/entities/site-assessment';
-import type { AnalysisProvenance } from '../domain/entities/risk-assessment';
+import type { RiskAssessment, AnalysisProvenance } from '../domain/entities/risk-assessment';
 import type { RedFlag } from '../domain/value-objects/red-flag';
 import type { TermsLinkCandidate, TermsFetcher, HtmlSanitizer } from '../domain/ports/content';
 import type { LlmAnalyzerFactory, LlmAnalysis } from '../domain/ports/analysis';
+import type { HubClient } from '../domain/ports/hub';
 import type { ProviderId } from '../domain/value-objects/provider-id';
 import type { LanguageDetector } from '../domain/ports/detection';
 import type { AssessmentRepository, KeyVault, SettingsRepository } from '../domain/ports/repositories';
 import type { Clock, Logger } from '../domain/ports/platform';
 import { RedFlagScanner } from '../domain/services/red-flag-scanner';
 import { ScoreAggregator } from '../domain/services/score-aggregator';
+import { contentHash } from '../domain/services/content-hash';
 
 export interface AnalyzeSiteInput {
   readonly origin: string;
@@ -35,6 +37,8 @@ export interface AnalyzeSiteDeps {
   readonly logger: Logger;
   readonly scanner?: RedFlagScanner;
   readonly aggregator?: ScoreAggregator;
+  /** Optional: community hub client. Omitting it disables hub integration. */
+  readonly hubClient?: HubClient;
 }
 
 /** Max legal pages to fetch per site — keeps it fast and token-light. */
@@ -45,6 +49,12 @@ const MAX_DOCUMENTS = 3;
  * sanitise the documents, score them deterministically, optionally enrich with a
  * BYOK LLM, persist and return the verdict. Falls back gracefully to heuristic
  * scoring when no key is available or the LLM call fails.
+ *
+ * When a hubClient is injected and the user has opted in (shareAnalyses=true,
+ * hubUrl set), the use case:
+ *   1. Computes a SHA-256 hash of the sanitised document content.
+ *   2. Checks the hub for a fresh cached analysis before calling the LLM.
+ *   3. Submits the local result to the hub after a successful local analysis.
  */
 export class AnalyzeSiteTerms {
   private readonly scanner: RedFlagScanner;
@@ -56,7 +66,8 @@ export class AnalyzeSiteTerms {
   }
 
   async execute(input: AnalyzeSiteInput): Promise<Result<SiteAssessment, Error>> {
-    const { fetcher, sanitizer, settings, languageDetector, repo, clock, logger } = this.deps;
+    const { fetcher, sanitizer, settings, languageDetector, repo, clock, logger, hubClient } =
+      this.deps;
     const now = clock.now();
     const cfg = await settings.load();
 
@@ -76,7 +87,6 @@ export class AnalyzeSiteTerms {
 
     // Sanitize each document with a generous budget so the ChunkingLlmAnalyzer
     // sees the full text and can split it into contextual windows itself.
-    // We still cap at maxTokens × 5 to avoid unbounded memory on pathological pages.
     const perDocSanitizeLimit = cfg.maxTokens * 5;
     const documents: TermsDocument[] = [];
     for (const candidate of ranked) {
@@ -102,6 +112,33 @@ export class AnalyzeSiteTerms {
       return err(new Error('Could not retrieve any legal document content.'));
     }
 
+    // --- Hub lookup (opt-in) ---
+    const termsHash =
+      cfg.shareAnalyses && hubClient ? await contentHash(documents.map((d) => d.text)) : null;
+
+    if (termsHash && hubClient && !cfg.alwaysRefresh) {
+      const cached = await hubClient.lookup(input.origin, termsHash);
+      if (cached?.isFresh) {
+        const hubAssessment: RiskAssessment = {
+          ...cached.assessment,
+          provenance: { ...cached.assessment.provenance, mode: 'hub' },
+        };
+        const site: SiteAssessment = {
+          origin: input.origin,
+          title: input.title,
+          status: 'ready',
+          documents,
+          assessment: hubAssessment,
+          error: null,
+          updatedAt: now,
+        };
+        await repo.save(site);
+        logger.log('info', 'used hub-cached analysis', { origin: input.origin });
+        return ok(site);
+      }
+    }
+
+    // --- Local analysis ---
     const redFlags: RedFlag[] = this.scanAll(documents);
     const { llm, provenance } = await this.maybeAnalyzeWithLlm(
       documents,
@@ -129,6 +166,18 @@ export class AnalyzeSiteTerms {
       updatedAt: now,
     };
     await repo.save(site);
+
+    // --- Hub submission (opt-in, best-effort) ---
+    if (termsHash && hubClient && assessment) {
+      void hubClient.submit(
+        input.origin,
+        termsHash,
+        assessment,
+        cfg.installationId,
+        language.tag,
+      );
+    }
+
     return ok(site);
   }
 

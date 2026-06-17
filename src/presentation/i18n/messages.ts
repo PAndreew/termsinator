@@ -1,4 +1,4 @@
-import type { SupportedUiLocale } from '../../domain/value-objects/language';
+﻿import type { SupportedUiLocale } from '../../domain/value-objects/language';
 
 /**
  * UI + risk-flag strings per supported locale. English is the complete source of
@@ -36,10 +36,15 @@ const en: Dict = {
   'options.addKey': 'Add key',
   'options.remove': 'Remove',
   'options.secret': 'Paste an API key',
+  'options.shareAnalyses': 'Share analyses with community hub (opt-in)',
+  'options.shareAnalysesHint': 'Anonymously contribute results so others can skip the LLM call on the same site.',
+  'options.hubUrl': 'Community hub URL',
+  'options.hubUrlPlaceholder': 'https://hub.example.com',
   'options.save': 'Save',
   'options.saved': 'Saved.',
   'options.invalid': 'Could not save: {error}',
-  'prompt.toast': 'Termsinator: press {hotkey} to check this site’s terms.',
+  'popup.fromHub': 'Result from community hub ({provider})',
+  'prompt.toast': 'Termsinator: press {hotkey} to check this site\'s terms.',
   'prompt.key': 'Termsinator detected your {provider} API key.',
   'band.low': 'Low',
   'band.moderate': 'Moderate',
@@ -92,9 +97,14 @@ const de: Dict = {
   'options.addKey': 'Schlüssel hinzufügen',
   'options.remove': 'Entfernen',
   'options.secret': 'API-Schlüssel einfügen',
+  'options.shareAnalyses': 'Analysen mit Community-Hub teilen (opt-in)',
+  'options.shareAnalysesHint': 'Ergebnisse anonym beitragen, damit andere den KI-Aufruf für dieselbe Seite überspringen können.',
+  'options.hubUrl': 'Community-Hub-URL',
+  'options.hubUrlPlaceholder': 'https://hub.example.com',
   'options.save': 'Speichern',
   'options.saved': 'Gespeichert.',
   'options.invalid': 'Speichern fehlgeschlagen: {error}',
+  'popup.fromHub': 'Ergebnis aus Community-Hub ({provider})',
   'prompt.toast': 'Termsinator: drücke {hotkey}, um die AGB zu prüfen.',
   'prompt.key': 'Termsinator hat deinen {provider}-API-Schlüssel erkannt.',
   'band.low': 'Gering',
@@ -180,7 +190,7 @@ const fr: Dict = {
   'app.tagline': 'Sachez à quoi vous consentez.',
   'popup.analyze': 'Analyser ce site',
   'popup.analyzing': 'Analyse…',
-  'popup.idle': 'Ce site n’a pas encore été analysé.',
+  'popup.idle': 'Ce site n\'a pas encore été analysé.',
   'popup.overall': 'Risque global',
   'popup.summary': 'En clair',
   'popup.redFlags': 'Ce qui ressort',
@@ -196,7 +206,7 @@ const fr: Dict = {
   'options.languageAuto': 'Détection automatique',
   'options.autoToast': 'Afficher une invite discrète sur les nouveaux sites',
   'options.alwaysRefresh': 'Toujours réanalyser (ignorer le cache)',
-  'options.maxTokens': 'Tokens max envoyés à l’IA',
+  'options.maxTokens': 'Tokens max envoyés à l\'IA',
   'options.activeProvider': 'Fournisseur préféré',
   'options.providerAuto': 'Premier disponible',
   'options.keys': 'Vos clés API (stockées sur cet appareil)',
@@ -206,7 +216,7 @@ const fr: Dict = {
   'options.secret': 'Collez une clé API',
   'options.save': 'Enregistrer',
   'options.saved': 'Enregistré.',
-  'options.invalid': 'Échec de l’enregistrement : {error}',
+  'options.invalid': 'Échec de l\'enregistrement : {error}',
   'prompt.toast': 'Termsinator : appuyez sur {hotkey} pour vérifier les conditions.',
   'prompt.key': 'Termsinator a détecté votre clé API {provider}.',
   'band.low': 'Faible',
@@ -229,7 +239,7 @@ const fr: Dict = {
   'flag.prechecked_consent': 'Consentement par cases pré-cochées.',
   'flag.biometric_data': 'Collecte possible de données biométriques.',
   'flag.sells_to_brokers': 'Vos données pourraient aller à des courtiers.',
-  'flag.missing_do_not_sell': 'Pas d’option claire « Ne pas vendre ».',
+  'flag.missing_do_not_sell': 'Pas d\'option claire « Ne pas vendre ».',
 };
 
 const zh: Dict = {

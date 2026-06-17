@@ -135,7 +135,9 @@ export function App() {
           <footer class="tz-foot">
             {a.provenance.mode === 'llm'
               ? t('popup.usingKey', { provider: a.provenance.provider ?? '' })
-              : t('popup.heuristic')}
+              : a.provenance.mode === 'hub'
+                ? t('popup.fromHub', { provider: a.provenance.provider ?? 'unknown' })
+                : t('popup.heuristic')}
           </footer>
         </>
       )}

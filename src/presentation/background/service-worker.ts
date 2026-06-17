@@ -20,6 +20,7 @@ import type { ExtensionStorage } from '../../infrastructure/storage/extension-st
 import { SystemClock } from '../../infrastructure/platform/system-clock';
 import { ConsoleLogger } from '../../infrastructure/platform/console-logger';
 
+import { SettingsAwareHubClient } from '../../infrastructure/hub/settings-aware-hub-client';
 import { maskSecret, type ProviderKey } from '../../domain/entities/provider-key';
 import { fingerprint } from '../../domain/services/fingerprint';
 import { providerDisplayName } from '../../domain/value-objects/provider-id';
@@ -45,6 +46,8 @@ const settingsRepo = new BrowserSettingsRepository(storage);
 const keyVault = new BrowserKeyVault(storage);
 const assessmentRepo = new BrowserAssessmentRepository(storage);
 
+const hubClient = new SettingsAwareHubClient(settingsRepo);
+
 const analyzeSite = new AnalyzeSiteTerms({
   fetcher: new HttpTermsFetcher(),
   sanitizer: new HtmlTextSanitizer(),
@@ -57,6 +60,7 @@ const analyzeSite = new AnalyzeSiteTerms({
   repo: assessmentRepo,
   clock,
   logger,
+  hubClient,
 });
 const detectKeys = new DetectProviderKeys({
   detector: new DashboardKeyDetector(),
@@ -185,5 +189,15 @@ browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (existing && existing.status === 'ready') return;
   await sendToTab(tabId, { kind: 'prompt', hotkey: HOTKEY });
 });
+
+// Generate a stable installation UUID once, on first startup.
+(async () => {
+  const settings = await settingsRepo.load();
+  if (!settings.installationId) {
+    const id = crypto.randomUUID();
+    await settingsRepo.save({ ...settings, installationId: id });
+    logger.log('info', `installationId generated: ${id.slice(0, 8)}…`);
+  }
+})();
 
 logger.log('info', 'Termsinator background ready');

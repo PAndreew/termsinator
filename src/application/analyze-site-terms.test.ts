@@ -11,11 +11,14 @@ import {
   FakeLlmAnalyzerFactory,
   FixedClock,
   NullLogger,
+  FakeHubClient,
 } from '../test-support/fakes';
 import { ok } from '../shared/result';
 import { Language } from '../domain/value-objects/language';
 import { maskSecret } from '../domain/entities/provider-key';
+import { DEFAULT_SETTINGS } from '../domain/entities/settings';
 import type { LlmAnalysis } from '../domain/ports/analysis';
+import type { HubLookupResult } from '../domain/ports/hub';
 
 const PRIVACY_URL = 'https://acme.example/privacy';
 const SELLING_TEXT = '<p>We may sell your personal information to data brokers and advertisers.</p>';
@@ -126,13 +129,7 @@ describe('AnalyzeSiteTerms', () => {
   });
 
   it('honours an explicit language override from settings', async () => {
-    const settings = new InMemorySettingsRepository({
-      languageOverride: 'fr',
-      autoToast: true,
-      activeProvider: null,
-      maxTokens: 6000,
-      alwaysRefresh: false,
-    });
+    const settings = new InMemorySettingsRepository({ ...DEFAULT_SETTINGS, languageOverride: 'fr' });
     const { deps } = makeDeps({ settings });
     const result = await new AnalyzeSiteTerms(deps).execute(input);
     expect(result.ok && result.value.assessment?.language).toBe('fr');
@@ -170,5 +167,80 @@ describe('AnalyzeSiteTerms', () => {
     const { deps } = makeDeps({ fetcher });
     const result = await new AnalyzeSiteTerms(deps).execute(input);
     expect(result.ok).toBe(false);
+  });
+
+  describe('hub integration', () => {
+    const hubAssessmentBase: HubLookupResult = {
+      isFresh: true,
+      provider: 'anthropic',
+      model: 'claude-3',
+      analyzedAt: 10,
+      assessment: {
+        overall: { score: 80, band: 'high', label: 'High Risk' },
+        frameworks: [],
+        redFlags: [],
+        summaryLines: ['Hub cached result.'],
+        language: 'en',
+        provenance: { mode: 'llm', provider: 'anthropic', model: 'claude-3' },
+        createdAt: 10,
+      },
+    };
+
+    it('returns hub-cached result when fresh and shareAnalyses=true', async () => {
+      const hubClient = new FakeHubClient(hubAssessmentBase);
+      const settings = new InMemorySettingsRepository({
+        ...DEFAULT_SETTINGS,
+        shareAnalyses: true,
+        hubUrl: 'https://hub.example',
+        installationId: 'test-id',
+      });
+      const { deps } = makeDeps({ settings, hubClient });
+
+      const result = await new AnalyzeSiteTerms(deps).execute(input);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.assessment?.provenance.mode).toBe('hub');
+      expect(result.value.assessment?.summaryLines).toEqual(['Hub cached result.']);
+      expect(hubClient.lookupCalls).toHaveLength(1);
+    });
+
+    it('does not call hub when shareAnalyses=false', async () => {
+      const hubClient = new FakeHubClient(hubAssessmentBase);
+      const { deps } = makeDeps({ hubClient });
+      await new AnalyzeSiteTerms(deps).execute(input);
+      expect(hubClient.lookupCalls).toHaveLength(0);
+    });
+
+    it('submits to hub after local analysis when shareAnalyses=true', async () => {
+      const hubClient = new FakeHubClient(null);
+      const settings = new InMemorySettingsRepository({
+        ...DEFAULT_SETTINGS,
+        shareAnalyses: true,
+        hubUrl: 'https://hub.example',
+        installationId: 'inst-xyz',
+      });
+      const { deps } = makeDeps({ settings, hubClient });
+
+      const result = await new AnalyzeSiteTerms(deps).execute(input);
+      expect(result.ok).toBe(true);
+      // submit is fire-and-forget; wait a tick for the void promise
+      await Promise.resolve();
+      expect(hubClient.submitCalls).toHaveLength(1);
+      expect(hubClient.submitCalls[0].origin).toBe(input.origin);
+    });
+
+    it('skips hub lookup when alwaysRefresh=true', async () => {
+      const hubClient = new FakeHubClient(hubAssessmentBase);
+      const settings = new InMemorySettingsRepository({
+        ...DEFAULT_SETTINGS,
+        shareAnalyses: true,
+        hubUrl: 'https://hub.example',
+        installationId: 'inst-xyz',
+        alwaysRefresh: true,
+      });
+      const { deps } = makeDeps({ settings, hubClient });
+      await new AnalyzeSiteTerms(deps).execute(input);
+      expect(hubClient.lookupCalls).toHaveLength(0);
+    });
   });
 });
