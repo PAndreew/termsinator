@@ -28,6 +28,8 @@ const en: Dict = {
   'options.languageAuto': 'Auto-detect',
   'options.autoToast': 'Show a gentle prompt on new sites',
   'options.alwaysRefresh': 'Always re-analyze (ignore cache)',
+  'options.modelOverride': 'Model override',
+  'options.modelOverridePlaceholder': 'Default for provider (e.g. deepseek/deepseek-chat-v3-0324)',
   'options.maxTokens': 'Max tokens sent to the AI',
   'options.activeProvider': 'Preferred provider',
   'options.providerAuto': 'First available',

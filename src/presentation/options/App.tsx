@@ -136,6 +136,16 @@ export function App() {
         </select>
       </label>
 
+      <label class="tz-field">
+        <span>{t('options.modelOverride')}</span>
+        <input
+          type="text"
+          placeholder={t('options.modelOverridePlaceholder')}
+          value={settings.modelOverride ?? ''}
+          onInput={(e) => patch({ modelOverride: e.currentTarget.value.trim() || null })}
+        />
+      </label>
+
       <button class="tz-primary" onClick={() => void save()}>
         {t('options.save')}
       </button>

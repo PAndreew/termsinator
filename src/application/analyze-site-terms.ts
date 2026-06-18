@@ -145,6 +145,7 @@ export class AnalyzeSiteTerms {
       language,
       cfg.activeProvider,
       cfg.maxTokens,
+      cfg.modelOverride ?? undefined,
     );
 
     const assessment = this.aggregator.aggregate({
@@ -196,13 +197,14 @@ export class AnalyzeSiteTerms {
     language: Language,
     preferred: ProviderId | null,
     maxTokens: number,
+    modelOverride?: string,
   ): Promise<{ llm: LlmAnalysis | null; provenance: AnalysisProvenance }> {
     const { keyVault, analyzerFactory, logger } = this.deps;
     const key = await keyVault.active(preferred);
     if (!key) {
       return { llm: null, provenance: { mode: 'heuristic', provider: null, model: null } };
     }
-    const analyzer = analyzerFactory.create(key.provider, key.secret);
+    const analyzer = analyzerFactory.create(key.provider, key.secret, modelOverride);
     const result = await analyzer.analyze({ documents, language, frameworks: LEGAL_FRAMEWORKS, maxTokens });
     if (!result.ok) {
       logger.log('warn', 'llm analysis failed, falling back to heuristics', {

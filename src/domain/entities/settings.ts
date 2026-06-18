@@ -10,6 +10,11 @@ export interface Settings {
   readonly activeProvider: ProviderId | null;
   /** Token budget for the sanitised document sent to the LLM. */
   readonly maxTokens: number;
+  /**
+   * Model identifier override. When set, overrides the provider's default model.
+   * For OpenRouter use the routed form, e.g. "deepseek/deepseek-chat-v3-0324".
+   */
+  readonly modelOverride: string | null;
   /** Re-analyse even if a cached assessment exists. */
   readonly alwaysRefresh: boolean;
   /**
@@ -33,6 +38,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoToast: true,
   activeProvider: null,
   maxTokens: 6000,
+  modelOverride: null,
   alwaysRefresh: false,
   shareAnalyses: false,
   hubUrl: null,
