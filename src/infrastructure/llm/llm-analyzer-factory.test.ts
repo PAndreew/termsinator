@@ -3,13 +3,10 @@ import { DefaultLlmAnalyzerFactory } from './llm-analyzer-factory';
 import type { FetchLike } from './http';
 import { Language } from '../../domain/value-objects/language';
 import { PROVIDER_IDS } from '../../domain/value-objects/provider-id';
-import { LEGAL_FRAMEWORKS } from '../../domain/value-objects/legal-framework';
 import type { AnalysisRequest } from '../../domain/ports/analysis';
+import { policyModel } from '../../test-support/policy-fixtures';
 
-const ANALYSIS_JSON = JSON.stringify({
-  frameworks: [{ framework: 'gdpr', score: 50, rationale: 'r' }],
-  summaryLines: ['s'],
-});
+const ANALYSIS_JSON = JSON.stringify(policyModel());
 
 interface Call {
   url: string;
@@ -35,7 +32,6 @@ function fakeFetch(bodyFor: (url: string) => unknown, status = 200): { fetch: Fe
 const request: AnalysisRequest = {
   documents: [{ url: 'https://x/p', kind: 'privacy', title: 'P', text: 'terms', approxTokens: 1 }],
   language: Language.english(),
-  frameworks: LEGAL_FRAMEWORKS,
 };
 
 describe('DefaultLlmAnalyzerFactory', () => {

@@ -46,6 +46,8 @@ describe('GetOrCreateAssessment', () => {
       assessment: null,
       error: null,
       updatedAt: 1,
+      termsHash: null,
+      policyUrls: [],
     });
     const uc = new GetOrCreateAssessment(repo, new FixedClock(5));
     expect((await uc.execute('https://x.example', 'X')).status).toBe('ready');

@@ -49,6 +49,6 @@ export class OpenAiCompatibleAnalyzer implements LlmAnalyzer {
     if (typeof content !== 'string') {
       return err(new Error('Unexpected chat-completions response shape'));
     }
-    return parseAnalysis(content);
+    return parseAnalysis(content, request);
   }
 }

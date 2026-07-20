@@ -1,13 +1,10 @@
-import type { RiskBand } from '../../domain/value-objects/risk-score';
+import type { Grade } from '../../domain/value-objects/grade';
 
-type ToastTone = RiskBand | 'info';
+type ToastTone = Grade | 'info';
 
 const TONE_COLOR: Record<ToastTone, string> = {
   info: '#2563eb',
-  low: '#16a34a',
-  moderate: '#ca8a04',
-  high: '#ea580c',
-  severe: '#dc2626',
+  A: '#16a34a', B: '#4d7c0f', C: '#ca8a04', D: '#ea580c', F: '#dc2626',
 };
 
 const HOST_ID = 'termsinator-toast-host';

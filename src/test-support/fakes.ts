@@ -22,7 +22,8 @@ import type {
   LlmAnalyzer,
   LlmAnalyzerFactory,
 } from '../domain/ports/analysis';
-import type { HubClient, HubLookupResult } from '../domain/ports/hub';
+import type { HubClient, HubConsensus, HubKey, HubReport, HubReportSummary } from '../domain/ports/hub';
+import type { TermsDocument } from '../domain/entities/terms-document';
 import type { RiskAssessment } from '../domain/entities/risk-assessment';
 import type { Clock, Logger, Notifier, ToastRequest } from '../domain/ports/platform';
 
@@ -36,6 +37,9 @@ export class InMemoryAssessmentRepository implements AssessmentRepository {
   }
   async remove(origin: string): Promise<void> {
     this.store.delete(origin);
+  }
+  async list(): Promise<SiteAssessment[]> {
+    return [...this.store.values()];
   }
 }
 
@@ -144,17 +148,23 @@ export class RecordingNotifier implements Notifier {
 }
 
 export class FakeHubClient implements HubClient {
-  public lookupCalls: { origin: string; termsHash: string }[] = [];
-  public submitCalls: { origin: string; termsHash: string; assessment: RiskAssessment }[] = [];
+  public lookupCalls: HubKey[] = [];
+  public submitCalls: { origin: string; key: HubKey; assessment: RiskAssessment; documents: readonly TermsDocument[] }[] = [];
+  public reports: readonly HubReportSummary[] = [];
+  public report: HubReport | null = null;
+  public submitPromise: Promise<void> = Promise.resolve();
 
-  constructor(private readonly stubResult: HubLookupResult | null = null) {}
+  constructor(private readonly stubResult: HubConsensus | null = null) {}
 
-  async lookup(origin: string, termsHash: string): Promise<HubLookupResult | null> {
-    this.lookupCalls.push({ origin, termsHash });
+  async lookup(key: HubKey): Promise<HubConsensus | null> {
+    this.lookupCalls.push(key);
     return this.stubResult;
   }
+  async listReports(): Promise<readonly HubReportSummary[]> { return this.reports; }
+  async getReport(): Promise<HubReport | null> { return this.report; }
 
-  async submit(origin: string, termsHash: string, assessment: RiskAssessment): Promise<void> {
-    this.submitCalls.push({ origin, termsHash, assessment });
+  async submit(origin: string, key: HubKey, assessment: RiskAssessment, documents: readonly TermsDocument[]): Promise<void> {
+    this.submitCalls.push({ origin, key, assessment, documents });
+    await this.submitPromise;
   }
 }

@@ -18,9 +18,9 @@ export class HttpTermsFetcher implements TermsFetcher {
     try {
       const res = await this.fetchImpl(url, {
         signal: controller.signal,
-        credentials: 'omit',
+        credentials: 'include',
         redirect: 'follow',
-        headers: { accept: 'text/html,application/xhtml+xml' },
+        headers: { accept: 'text/html,application/xhtml+xml,*/*;q=0.9' },
       });
       if (!res.ok) return err(new Error(`HTTP ${res.status} for ${url}`));
 

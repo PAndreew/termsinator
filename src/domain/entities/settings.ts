@@ -25,12 +25,6 @@ export interface Settings {
   readonly shareAnalyses: boolean;
   /** Base URL of the termsinator-hub instance to use. Null disables hub sharing. */
   readonly hubUrl: string | null;
-  /**
-   * Stable UUID generated once on first install. Never changes after that.
-   * Sent to the hub with submissions so the server can rate-limit per installation.
-   * The hub only exposes the first 8 chars publicly (no PII linkage).
-   */
-  readonly installationId: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -41,6 +35,5 @@ export const DEFAULT_SETTINGS: Settings = {
   modelOverride: null,
   alwaysRefresh: false,
   shareAnalyses: false,
-  hubUrl: null,
-  installationId: '',
+  hubUrl: 'https://termsinator-hub.vercel.app',
 };

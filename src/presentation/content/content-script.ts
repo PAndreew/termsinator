@@ -79,9 +79,61 @@ async function send(req: BgRequest): Promise<unknown> {
 function summarize(assessment: SiteAssessment): string {
   const a = assessment.assessment;
   if (!a) return t('popup.idle');
-  const band = t(`band.${a.overall.band}`);
-  const line = a.summaryLines[0] ?? '';
-  return `${t('popup.overall')}: ${band}. ${line}`.trim();
+  const line = a.summaryFacts[0]?.text ?? '';
+  return `Policy grade ${a.grade ?? 'unknown'}. ${line}`.trim();
+}
+
+const GRADE_COLOR: Record<string, string> = { A: '#16a34a', B: '#4d7c0f', C: '#ca8a04', D: '#ea580c', F: '#dc2626' };
+const DOT_ID = 'tz-score-dot';
+
+function injectDot(innerHtml: string, onClick: () => void, onDismiss: () => void): void {
+  if (typeof document === 'undefined' || !document.documentElement) return;
+  document.getElementById(DOT_ID)?.remove();
+  const host = document.createElement('div');
+  host.id = DOT_ID;
+  const shadow = host.attachShadow({ mode: 'open' });
+  shadow.innerHTML = innerHtml;
+  shadow.querySelector('.x')?.addEventListener('click', (e) => { e.stopPropagation(); onDismiss(); });
+  shadow.querySelector('.dot')?.addEventListener('click', onClick);
+  document.documentElement.appendChild(host);
+}
+
+const DOT_BASE_CSS = `
+  .wrap{position:fixed;bottom:24px;right:24px;z-index:2147483647}
+  .dot{width:40px;height:40px;border-radius:50%;color:#fff;font:700 13px/40px system-ui,sans-serif;
+    text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);user-select:none;
+    transition:transform .15s;position:relative}
+  .dot:hover{transform:scale(1.12)}
+  .x{position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;
+    background:rgba(0,0,0,.45);color:#fff;font:700 11px/16px system-ui;text-align:center;cursor:pointer;line-height:16px}
+`;
+
+function showAnalyzingDot(): void {
+  injectDot(
+    `<style>${DOT_BASE_CSS}
+    @keyframes tz-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .dot{background:#6366f1;animation:tz-pulse 1.4s ease-in-out infinite}
+    </style>
+    <div class="wrap"><div class="dot" title="Termsinator: analysing…">…<div class="x">×</div></div></div>`,
+    () => {/* click on analysing dot does nothing */},
+    () => document.getElementById(DOT_ID)?.remove(),
+  );
+}
+
+function showScoreDot(assessment: SiteAssessment): void {
+  const a = assessment.assessment;
+  if (!a) return;
+  const color = a.grade ? GRADE_COLOR[a.grade] : '#6b7280';
+  injectDot(
+    `<style>${DOT_BASE_CSS}</style>
+    <div class="wrap">
+      <div class="dot" style="background:${color}" title="Termsinator policy grade ${a.grade ?? 'unknown'}">
+        ${a.grade ?? '?'}<div class="x">×</div>
+      </div>
+    </div>`,
+    () => showToast(summarize(assessment), a.grade ?? undefined, undefined),
+    () => document.getElementById(DOT_ID)?.remove(),
+  );
 }
 
 browser.runtime.onMessage.addListener((message: unknown) => {
@@ -91,9 +143,11 @@ browser.runtime.onMessage.addListener((message: unknown) => {
       return Promise.resolve(collect());
     case 'result':
       if (command.ok && command.assessment) {
-        showToast(summarize(command.assessment), command.assessment.assessment?.overall.band ?? 'low');
+        const grade = command.assessment.assessment?.grade ?? undefined;
+        showToast(summarize(command.assessment), grade);
+        showScoreDot(command.assessment);
       } else {
-        showToast(t('popup.error', { error: command.error ?? '' }), 'severe');
+        showToast(t('popup.error', { error: command.error ?? '' }), 'F');
       }
       return undefined;
     case 'prompt':
@@ -102,6 +156,17 @@ browser.runtime.onMessage.addListener((message: unknown) => {
     case 'keyDetected':
       showToast(t('prompt.key', { provider: command.provider }), 'info');
       return undefined;
+    case 'analyzing':
+      showAnalyzingDot();
+      return undefined;
+    case 'showScore':
+      showScoreDot(command.assessment);
+      return undefined;
+    case 'stale': {
+      const date = new Date(command.lastAnalysedAt).toLocaleDateString();
+      showToast(t('prompt.stale', { date }), 'info', () => void send({ kind: 'analyzeActiveTab' }));
+      return undefined;
+    }
     default:
       return undefined;
   }

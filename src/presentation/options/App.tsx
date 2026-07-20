@@ -97,6 +97,7 @@ export function App() {
         <span>{t('options.shareAnalyses')}</span>
       </label>
       {settings.shareAnalyses && (
+        <div>
         <label class="tz-field">
           <span>{t('options.hubUrl')}</span>
           <input
@@ -107,6 +108,7 @@ export function App() {
           />
           <small class="tz-muted">{t('options.shareAnalysesHint')}</small>
         </label>
+        </div>
       )}
 
       <label class="tz-field">

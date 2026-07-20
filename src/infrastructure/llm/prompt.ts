@@ -1,168 +1,128 @@
-import { type Result, ok, err } from '../../shared/result';
-import { isLegalFramework, frameworkLabel } from '../../domain/value-objects/legal-framework';
-import type { AnalysisRequest, LlmAnalysis, LlmFrameworkVerdict, LlmAnalysisFlag } from '../../domain/ports/analysis';
+import { type Result, err, ok } from '../../shared/result';
+import type { AnalysisRequest, LlmAnalysis, UrlDiscoveryAnalysis } from '../../domain/ports/analysis';
+import { promptAttributeCatalog } from '../../domain/services/privacy-attribute-registry';
+import { parseAndValidatePolicyAnalysis } from './analysis-schema';
 
-const JSON_SHAPE =
-  '{"frameworks":[{"framework":"gdpr","score":0,"rationale":"..."}],' +
-  '"redFlags":[{"id":"slug","messageKey":"flag.slug","affects":["gdpr"],"weight":0,"evidence":"quote"}],' +
-  '"summaryLines":["l1","l2","l3","l4","l5"]}';
+const DISCOVERY_SHAPE = '{"terms":"https://example.com/terms-or-null","privacy":"https://example.com/privacy-or-null"}';
 
-/**
- * Provider-agnostic prompt construction and response parsing. Keeping this here
- * (not in each vendor adapter) means every backend asks for — and is parsed
- * into — the exact same structured verdict, satisfying the LlmAnalyzer contract.
- *
- * When `request.isSynthesis` is true the prompts switch to a synthesis mode that
- * asks the model to merge N partial chunk analyses rather than read raw text.
- */
 export function buildSystemPrompt(request: AnalysisRequest): string {
-  if (request.isSynthesis) {
+  if (request.isUrlDiscovery) {
     return [
-      'You are a privacy and consumer-rights analyst. You have received partial risk analyses',
-      'of consecutive sections of one long Terms of Service / Privacy Policy document.',
-      '',
-      'Synthesize them into ONE final risk assessment:',
-      '- Average framework scores, weighting higher scores more heavily.',
-      '- Merge red flags; keep a flag if it appears in any section.',
-      '- Do not invent findings that are absent from all partial analyses.',
-      '',
-      `Write a plain-language, non-alarmist 5-line summary in the language "${request.language.tag}".`,
-      '',
-      'Respond with ONLY a JSON object, no markdown, of the shape:',
-      JSON_SHAPE,
+      'Identify the Terms of Service and Privacy Policy URLs in the supplied URL list.',
+      'Use only supplied URLs. Use null when a page cannot be identified.',
+      `Return exactly one JSON object with no markdown or prose: ${DISCOVERY_SHAPE}`,
     ].join('\n');
   }
 
-  const frameworks = request.frameworks.map((f) => `- ${f} (${frameworkLabel(f)})`).join('\n');
+  const mode = request.isSynthesis ? 'evidence_synthesis' : 'full';
   return [
-    'You are a privacy and consumer-rights analyst. You read website Terms of Service and',
-    'Privacy Policies and assess the RISK they pose to an ordinary user.',
+    'You are an evidence extractor and privacy-practice classifier.',
+    'You do not calculate scores, grades, weighted totals, thresholds, or legal compliance verdicts.',
+    `Mode: ${mode}. Output language: ${request.language.tag}.`,
     '',
-    'Score each of these frameworks from 0 (no concern) to 100 (severe risk):',
-    frameworks,
+    'Return exactly one JSON object. Do not use markdown, code fences, comments, or surrounding prose.',
+    'The root object must contain only: kind, schemaVersion, rubricVersion, promptVersion, language, evidence, classifications, summaryFacts, actions.',
+    'Use kind="policy_analysis", schemaVersion="3", rubricVersion="privacy-rubric-1", promptVersion="3".',
     '',
-    `Write a plain-language, non-alarmist summary a layperson understands, in the language`,
-    `identified by the BCP-47 tag "${request.language.tag}". Exactly 5 short lines.`,
+    'Evidence rules:',
+    '- Every quote must be an exact, contiguous substring of the identified source document.',
+    '- Use the supplied documentId and documentUrl exactly. Never normalize or invent URLs.',
+    '- One evidence item may support several classifications. Keep quotes short and decisive.',
+    '- Numeric states require at least one evidenceRef. unknown and not_applicable require no evidenceRefs.',
     '',
-    'Respond with ONLY a JSON object, no markdown, of the shape:',
-    JSON_SHAPE,
+    'Classification rules:',
+    '- Return each catalog attribute exactly once.',
+    '- state is 0, 1, 2, 3, 4, "unknown", or "not_applicable".',
+    '- confidence is "direct", "inferred", or "uncertain".',
+    '- Use unknown when the supplied material does not establish the practice. Absence of text is not state 0.',
+    '- Use not_applicable only when the service context makes the attribute genuinely irrelevant.',
+    '- conflict is true when supplied clauses materially conflict.',
+    '- Interpolate states 1-3 between each attribute state0Anchor and state4Anchor.',
+    '',
+    'Action rules:',
+    '- Actions must be concrete, linked to classified attributes, and supported by evidence when based on a disclosed workflow.',
+    '- Valid kinds: disable_setting, revoke_permission, opt_out, withdraw_consent, delete_data, delete_account, request_access, request_correction, contact_privacy_team, limit_input, avoid_sensitive_input, use_alternative, stop_using_service, monitor_policy, investigate_unknown.',
+    '- A destructive immediate action must include at least two steps and a fallback. Explicitly warn about irreversible consequences in why or steps.',
+    '- Strong actions such as deleting data/account or stopping use are allowed when proportionate. Do not soften a necessary action.',
+    '',
+    'Attribute catalog (weights and scoring rules are intentionally omitted):',
+    JSON.stringify(promptAttributeCatalog()),
+    '',
+    'Required structural example (values are illustrative, not findings):',
+    '{"kind":"policy_analysis","schemaVersion":"3","rubricVersion":"privacy-rubric-1","promptVersion":"3","language":"en","evidence":[],"classifications":[{"attributeId":"data.basic_identifiers","state":"unknown","confidence":"uncertain","rationale":"Not established in supplied text.","evidenceRefs":[],"conflict":false}],"summaryFacts":[],"actions":[]}',
   ].join('\n');
 }
 
 export function buildUserPrompt(request: AnalysisRequest): string {
-  if (request.isSynthesis) {
-    const synthText = request.documents[0]?.text ?? '';
-    return `Synthesize these partial analyses into one final assessment:\n\n${synthText}`;
+  if (request.isUrlDiscovery) {
+    return `URL list:\n${request.documents[0]?.text ?? ''}`;
   }
-
-  const docs = request.documents
-    .map((d) => `# ${d.kind.toUpperCase()} — ${d.title}\nURL: ${d.url}\n\n${d.text}`)
-    .join('\n\n---\n\n');
-  return `Analyse the following document(s):\n\n${docs}`;
+  if (request.isSynthesis) {
+    const manifest = (request.sourceDocuments ?? [])
+      .map((document, index) => ({ documentId: `doc-${index + 1}`, documentUrl: document.url, title: document.title }));
+    return [
+      'Produce the final classification from the verified candidate package below.',
+      'Do not invent evidence. Copy only candidate quotes and assign their global documentId from the manifest URL match.',
+      `Source manifest: ${JSON.stringify(manifest)}`,
+      `Candidate package: ${request.documents[0]?.text ?? '[]'}`,
+    ].join('\n\n');
+  }
+  const documents = request.documents.map((document, index) => ({
+    documentId: `doc-${index + 1}`,
+    documentUrl: document.url,
+    kind: document.kind,
+    title: document.title,
+    text: document.text,
+  }));
+  return `Classify these policy documents:\n${JSON.stringify(documents)}`;
 }
 
-/**
- * Parses a model's raw text into a validated LlmAnalysis. Tolerates code fences
- * and surrounding prose by extracting the first balanced JSON object, then
- * coerces/validates every field defensively (models are not always obedient).
- */
-export function parseAnalysis(raw: string): Result<LlmAnalysis, Error> {
-  const json = extractJsonObject(raw);
-  if (json === null) return err(new Error('No JSON object found in model response'));
+export function parseAnalysis(raw: string, request: AnalysisRequest): Result<LlmAnalysis, Error> {
+  if (request.isUrlDiscovery) return parseDiscovery(raw, request);
+  const parsed = parseAndValidatePolicyAnalysis(raw, request.sourceDocuments ?? request.documents);
+  if (parsed.ok && parsed.value.language !== request.language.tag) {
+    return err(new Error(`Model response language ${parsed.value.language} does not match requested language ${request.language.tag}`));
+  }
+  return parsed;
+}
 
+function parseDiscovery(raw: string, request: AnalysisRequest): Result<UrlDiscoveryAnalysis, Error> {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(json);
-  } catch (e) {
-    return err(new Error(`Model response was not valid JSON: ${String(e)}`));
+    parsed = JSON.parse(raw.trim());
+  } catch (error) {
+    return err(new Error(`Model response was not valid JSON: ${String(error)}`));
   }
-  if (typeof parsed !== 'object' || parsed === null) {
-    return err(new Error('Model response JSON was not an object'));
+  if (!isRecord(parsed) || !Object.keys(parsed).every((key) => key === 'terms' || key === 'privacy')) {
+    return err(new Error('Invalid URL discovery response'));
   }
-
-  const obj = parsed as Record<string, unknown>;
-  const frameworks = coerceFrameworks(obj.frameworks);
-  const redFlags = coerceFlags(obj.redFlags);
-  const summaryLines = coerceSummary(obj.summaryLines);
-
-  if (frameworks.length === 0 && summaryLines.length === 0) {
-    return err(new Error('Model response contained no usable frameworks or summary'));
+  const terms = parseDiscoveryUrl(parsed.terms);
+  const privacy = parseDiscoveryUrl(parsed.privacy);
+  const allowed = new Set((request.documents[0]?.text ?? '').split(/\s+/).filter(Boolean).map(normalizeUrl));
+  if ((terms && !allowed.has(terms)) || (privacy && !allowed.has(privacy))) {
+    return err(new Error('URL discovery response contained a URL outside the supplied list'));
   }
-  return ok({ frameworks, redFlags, summaryLines });
+  return ok({
+    kind: 'url_discovery',
+    discoveredUrls: { terms, privacy },
+  });
 }
 
-function extractJsonObject(raw: string): string | null {
-  const start = raw.indexOf('{');
-  if (start < 0) return null;
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  for (let i = start; i < raw.length; i++) {
-    const ch = raw[i]!;
-    if (inString) {
-      if (escaped) escaped = false;
-      else if (ch === '\\') escaped = true;
-      else if (ch === '"') inString = false;
-      continue;
-    }
-    if (ch === '"') inString = true;
-    else if (ch === '{') depth++;
-    else if (ch === '}') {
-      depth--;
-      if (depth === 0) return raw.slice(start, i + 1);
-    }
+function parseDiscoveryUrl(value: unknown): string | null {
+  if (value === null) return null;
+  if (typeof value !== 'string') return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+  } catch {
+    return null;
   }
-  return null;
 }
 
-function clampScore(v: unknown): number {
-  const n = typeof v === 'number' ? v : Number(v);
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(100, Math.max(0, Math.round(n)));
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function coerceFrameworks(value: unknown): LlmFrameworkVerdict[] {
-  if (!Array.isArray(value)) return [];
-  const out: LlmFrameworkVerdict[] = [];
-  for (const item of value) {
-    if (typeof item !== 'object' || item === null) continue;
-    const o = item as Record<string, unknown>;
-    if (typeof o.framework !== 'string' || !isLegalFramework(o.framework)) continue;
-    out.push({
-      framework: o.framework,
-      score: clampScore(o.score),
-      rationale: typeof o.rationale === 'string' ? o.rationale : '',
-    });
-  }
-  return out;
-}
-
-function coerceFlags(value: unknown): LlmAnalysisFlag[] {
-  if (!Array.isArray(value)) return [];
-  const out: LlmAnalysisFlag[] = [];
-  for (const item of value) {
-    if (typeof item !== 'object' || item === null) continue;
-    const o = item as Record<string, unknown>;
-    if (typeof o.id !== 'string') continue;
-    const affects = Array.isArray(o.affects)
-      ? o.affects.filter((a): a is string => typeof a === 'string' && isLegalFramework(a))
-      : [];
-    out.push({
-      id: o.id,
-      messageKey: typeof o.messageKey === 'string' ? o.messageKey : `flag.${o.id}`,
-      affects: affects as LlmAnalysisFlag['affects'],
-      weight: clampScore(o.weight),
-      evidence: typeof o.evidence === 'string' ? o.evidence.slice(0, 200) : '',
-    });
-  }
-  return out;
-}
-
-function coerceSummary(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter((l): l is string => typeof l === 'string')
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0)
-    .slice(0, 5);
+function normalizeUrl(value: string): string {
+  try { return new URL(value).href; } catch { return ''; }
 }

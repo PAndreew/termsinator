@@ -3,25 +3,19 @@ import type { Settings } from '../domain/entities/settings';
 import type { SettingsRepository } from '../domain/ports/repositories';
 
 /** A partial patch of settings the UI may submit. */
-export type SettingsPatch = Omit<Partial<Settings>, 'installationId'>;
+export type SettingsPatch = Partial<Settings>;
 
 /**
  * Merges and validates a settings patch, then persists. Validation keeps the
  * token budget sane so the analysis pipeline can't be starved or made wasteful.
  *
- * `installationId` is always preserved from the current persisted value — it
- * must never be overwritten by a user-facing settings patch.
  */
 export class SaveSettings {
   constructor(private readonly settings: SettingsRepository) {}
 
   async execute(patch: SettingsPatch): Promise<Result<Settings, Error>> {
     const current = await this.settings.load();
-    const merged: Settings = {
-      ...current,
-      ...patch,
-      installationId: current.installationId, // always preserved
-    };
+    const merged: Settings = { ...current, ...patch };
 
     if (!Number.isFinite(merged.maxTokens) || merged.maxTokens < 500 || merged.maxTokens > 50_000) {
       return err(new Error('maxTokens must be between 500 and 50000'));

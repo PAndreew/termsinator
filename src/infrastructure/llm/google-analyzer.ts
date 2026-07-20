@@ -33,6 +33,6 @@ export class GoogleAnalyzer implements LlmAnalyzer {
     if (typeof text !== 'string') {
       return err(new Error('Unexpected Gemini generateContent response shape'));
     }
-    return parseAnalysis(text);
+    return parseAnalysis(text, request);
   }
 }

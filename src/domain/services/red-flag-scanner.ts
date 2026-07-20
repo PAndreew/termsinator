@@ -19,6 +19,22 @@ interface FlagPattern {
  */
 const PATTERNS: readonly FlagPattern[] = [
   {
+    id: 'syncs_contacts', messageKey: 'flag.syncs_contacts', affects: ['data_sharing', 'common_sense', 'gdpr'], weight: 85,
+    re: /\b(sync|upload|collect|access|import)[^.]{0,45}\b(contacts?|address book|phone book)\b/i,
+  },
+  {
+    id: 'collects_precise_location', messageKey: 'flag.collects_precise_location', affects: ['data_sharing', 'common_sense', 'gdpr'], weight: 70,
+    re: /\b(collect|track|access|use)[^.]{0,45}\b(precise|exact|gps|real[ -]?time)[^.]{0,20}\blocation\b/i,
+  },
+  {
+    id: 'accesses_microphone', messageKey: 'flag.accesses_microphone', affects: ['data_sharing', 'common_sense', 'gdpr'], weight: 80,
+    re: /\b(access|collect|record|upload)[^.]{0,45}\b(microphone|audio recordings?|voice data)\b/i,
+  },
+  {
+    id: 'accesses_photo_library', messageKey: 'flag.accesses_photo_library', affects: ['data_sharing', 'common_sense', 'gdpr'], weight: 70,
+    re: /\b(access|scan|collect|upload)[^.]{0,45}\b(photo library|camera roll|photos and videos)\b/i,
+  },
+  {
     id: 'sells_personal_data',
     messageKey: 'flag.sells_personal_data',
     affects: ['ccpa', 'data_sharing', 'common_sense'],

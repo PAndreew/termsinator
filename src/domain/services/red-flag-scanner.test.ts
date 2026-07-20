@@ -51,6 +51,11 @@ describe('RedFlagScanner', () => {
     expect(found).toContain('biometric_data');
   });
 
+  it('flags concrete device-data exposure', () => {
+    const found = ids('We upload your contacts and access precise GPS location. We may record microphone audio and scan your photo library.');
+    expect(found).toEqual(expect.arrayContaining(['syncs_contacts', 'collects_precise_location', 'accesses_microphone', 'accesses_photo_library']));
+  });
+
   it('captures a short evidence snippet for transparency', () => {
     const flags = scanner.scan('We may sell your personal information to anyone.');
     const flag = flags.find((f) => f.id === 'sells_personal_data');

@@ -35,7 +35,7 @@ export class AnthropicAnalyzer implements LlmAnalyzer {
       },
       {
         model: this.cfg.model,
-        max_tokens: 1024,
+        max_tokens: 8192,
         temperature: 0.2,
         system: buildSystemPrompt(request),
         messages: [{ role: 'user', content: buildUserPrompt(request) }],
@@ -47,6 +47,6 @@ export class AnthropicAnalyzer implements LlmAnalyzer {
     if (typeof text !== 'string') {
       return err(new Error('Unexpected Anthropic messages response shape'));
     }
-    return parseAnalysis(text);
+    return parseAnalysis(text, request);
   }
 }

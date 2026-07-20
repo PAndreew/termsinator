@@ -1,79 +1,79 @@
 # Termsinator
 
-A **BYOK** (bring-your-own-key) browser extension that quietly finds, analyses and
-explains the **Terms & Conditions / Privacy Policy** of any site you visit — and tells you,
-in plain language, what you're actually agreeing to.
+Termsinator is a bring-your-own-key browser extension that finds a site's Terms
+of Service and Privacy Policy, extracts verifiable evidence, and grades how
+intrusive or privacy-invasive the disclosed practices are.
 
-- 🔍 **Auto-discovers** legal pages programmatically (multilingual link detection) — no
-  server, minimal page footprint.
-- ✂️ **Token-efficient**: strips scripts/markup/boilerplate before any AI call.
-- 🧠 **Scores** each policy on **common sense, GDPR (EU), California (CCPA/CPRA), data
-  sharing and data retention**, and writes a **5-line layman summary** of the risks.
-- 🌍 **Auto-detects your language** (override in settings). UI + summaries in en/de/es/fr/zh.
-- 🔑 **Auto-detects your AI API keys** — but only on the providers' own dashboards
-  (OpenAI, Anthropic, Google, Mistral, DeepSeek, Moonshot, Groq, xAI, OpenRouter, Zhipu,
-  Perplexity, Fireworks). Keys never leave your device.
-- 🤫 **Non-intrusive**: a gentle toast on new sites; press **Alt+Shift+T** to analyse.
-- 🛟 **Graceful degradation**: with no key, deterministic built-in checks still flag the
-  worst clauses.
+## What it does
 
-## Architecture
+- Discovers legal pages from the active site.
+- Sanitizes policy text before analysis.
+- Supports OpenAI-compatible providers, Anthropic, and Google Gemini.
+- Requires exact source quotes for every numeric privacy classification.
+- Evaluates 43 versioned privacy attributes across eight dimensions.
+- Calculates the risk score and A-F grade locally; the model never performs the
+  scoring math.
+- Reports evidence-backed facts and concrete protective actions, including
+  deletion or stopping use when proportionate.
+- Falls back to conservative local phrase checks when no model key is present.
+- Stores API keys and assessments in browser-local extension storage.
 
-Clean Architecture — dependencies point inward; the domain has zero outward imports.
+Community sharing is optional and disabled by default. When enabled, submissions
+are signed with a locally generated P-256 identity and sent to a separately
+configured Termsinator Hub.
 
-```
-src/
-  domain/          entities, value objects, ports (interfaces), pure scoring services
-  application/     use cases, depending only on domain + ports
-  infrastructure/  adapters implementing the ports (LLM, sanitiser, storage, detection…)
-  presentation/    MV3 wiring: background (composition root), content, popup, options, i18n
-  shared/          Result type
-```
+## Grading
 
-- **Dependency inversion**: use cases receive ports via their constructors; only the
-  background service worker (`src/presentation/background/service-worker.ts`) knows concrete
-  adapters.
-- **Factory**: `DefaultLlmAnalyzerFactory` returns the right vendor adapter per credential.
-- **Liskov**: every `LlmAnalyzer` / repository is interchangeable; tests swap in fakes
-  (`src/test-support/fakes.ts`).
-- Built test-first (red→green) with **Vitest** — 100 tests across domain, application and
-  infrastructure.
+The current contract is analysis schema `3`, prompt version `3`, and rubric
+`privacy-rubric-1`. The model returns:
 
-## Develop
+- exact evidence excerpts;
+- one classification for every rubric attribute;
+- evidence-backed summary facts;
+- structured, actionable user tasks.
+
+The extension validates that evidence occurs verbatim in the supplied document,
+then calculates practice risk, disclosure floors, severe-practice floors,
+coverage, confidence, and the final grade deterministically.
+
+See [the grading rubric](docs/privacy-grading-rubric-v1.md) and
+[analysis prompt v3](docs/analysis-prompt-v3.md).
+
+## Development
 
 ```bash
 npm install
-npm test          # run the suite
-npm run typecheck # strict TS
-npm run build     # emits dist/chrome and dist/firefox
+npm test
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-## Load the extension
+Build output is written to `dist/chrome` and `dist/firefox`.
 
-**Chrome / Edge**
-1. `npm run build:chrome`
-2. Go to `chrome://extensions`, enable **Developer mode**.
-3. **Load unpacked** → select `dist/chrome`.
+## Loading the extension
 
-**Firefox**
-1. `npm run build:firefox`
-2. Go to `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** → pick any file
-   in `dist/firefox`.
+Chrome or Edge:
 
-## Using it (BYOK)
+1. Run `npm run build:chrome`.
+2. Open `chrome://extensions` and enable Developer mode.
+3. Choose Load unpacked and select `dist/chrome`.
 
-1. Visit a provider dashboard (e.g. `platform.openai.com`, `console.anthropic.com`). When a
-   key is on the page, Termsinator detects it and shows a confirmation toast. You can also
-   add a key manually in **Settings**.
-2. Browse to any site. A gentle prompt appears; press **Alt+Shift+T** (or open the popup and
-   click **Analyze**).
-3. The background worker discovers the Terms/Privacy pages, sanitises them, scores them with
-   your key, and the popup shows per-area risk bands plus a 5-line summary in your language.
+Firefox:
 
-## Privacy
+1. Run `npm run build:firefox`.
+2. Open `about:debugging#/runtime/this-firefox`.
+3. Choose Load Temporary Add-on and select a file under `dist/firefox`.
 
-- No telemetry, no backend. API keys and assessments live only in `browser.storage.local`.
-- Key detection runs **only** on known provider hosts, so the extension never harvests a
-  credential that might not be yours.
-- The model defaults are configurable per provider in the factory; switch the preferred
-  provider in Settings.
+## Privacy and security
+
+- API keys are used directly from the extension and are not sent to the hub.
+- Key detection runs only on known provider dashboard hosts.
+- No telemetry is included.
+- Hub sharing is opt-in.
+- URL discovery responses are restricted to URLs supplied to the model.
+- Imported hub reports are not automatically resubmitted.
+
+## License
+
+MIT

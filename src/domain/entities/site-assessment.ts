@@ -15,6 +15,10 @@ export interface SiteAssessment {
   readonly assessment: RiskAssessment | null;
   readonly error: string | null;
   readonly updatedAt: number;
+  /** SHA-256 of the fetched document texts — used for local and hub cache hits. */
+  readonly termsHash: string | null;
+  /** Policy page URLs analysed — used for lightweight stale detection on page load. */
+  readonly policyUrls: readonly string[];
 }
 
 export function idleAssessment(origin: string, title: string, now: number): SiteAssessment {
@@ -26,5 +30,7 @@ export function idleAssessment(origin: string, title: string, now: number): Site
     assessment: null,
     error: null,
     updatedAt: now,
+    termsHash: null,
+    policyUrls: [],
   };
 }

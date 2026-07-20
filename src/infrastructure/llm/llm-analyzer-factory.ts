@@ -13,7 +13,7 @@ const OPENAI_DIALECT: Partial<Record<ProviderId, { baseUrl: string; model: strin
   groq: { baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile', label: 'Groq' },
   xai: { baseUrl: 'https://api.x.ai/v1', model: 'grok-2-latest', label: 'xAI (Grok)' },
   mistral: { baseUrl: 'https://api.mistral.ai/v1', model: 'mistral-small-latest', label: 'Mistral AI' },
-  openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-4o-mini', label: 'OpenRouter' },
+  openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'deepseek/deepseek-v4-flash', label: 'OpenRouter' },
   perplexity: { baseUrl: 'https://api.perplexity.ai', model: 'sonar', label: 'Perplexity' },
   fireworks: {
     baseUrl: 'https://api.fireworks.ai/inference/v1',

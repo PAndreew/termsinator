@@ -1,91 +1,39 @@
-import type { HubClient, HubLookupResult } from '../../domain/ports/hub';
+import type { ContributorAuthenticator, HubClient, HubConsensus, HubKey, HubReport, HubReportSummary } from '../../domain/ports/hub';
 import type { RiskAssessment } from '../../domain/entities/risk-assessment';
+import type { TermsDocument } from '../../domain/entities/terms-document';
 import type { SettingsRepository } from '../../domain/ports/repositories';
 
-const LOOKUP_TIMEOUT_MS = 5_000;
-const SUBMIT_TIMEOUT_MS = 10_000;
+const LOOKUP_TIMEOUT_MS = 5_000; const SUBMIT_TIMEOUT_MS = 10_000;
 
-/**
- * Hub client that reads the user's current settings on every call.
- * Returns null / no-ops immediately when shareAnalyses=false or hubUrl=null,
- * so the use case never needs to check those flags itself.
- *
- * Caches the HttpHubClient instance while the hub URL stays the same, which is
- * the common case. A URL change creates a new client on the next call.
- */
 export class SettingsAwareHubClient implements HubClient {
-  private cache: { url: string; client: HttpHubClient } | null = null;
-
-  constructor(private readonly settingsRepo: SettingsRepository) {}
-
-  async lookup(origin: string, termsHash: string): Promise<HubLookupResult | null> {
-    const cfg = await this.settingsRepo.load();
-    if (!cfg.shareAnalyses || !cfg.hubUrl) return null;
-    return this.forUrl(cfg.hubUrl).lookup(origin, termsHash);
+  constructor(private readonly settingsRepo: SettingsRepository, private readonly authenticator: ContributorAuthenticator) {}
+  async lookup(key: HubKey): Promise<HubConsensus | null> {
+    const cfg = await this.settingsRepo.load(); if (!cfg.hubUrl) return null;
+    const params = new URLSearchParams(Object.entries(key)); try {
+      const res = await fetch(`${cfg.hubUrl}/v2/analyses?${params}`, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
+      const body = await res.json() as { ok: boolean; data?: HubConsensus }; return res.ok && body.ok ? body.data ?? null : null;
+    } catch { return null; }
   }
-
-  async submit(
-    origin: string,
-    termsHash: string,
-    assessment: RiskAssessment,
-    installationId: string,
-    language: string,
-  ): Promise<void> {
-    const cfg = await this.settingsRepo.load();
-    if (!cfg.shareAnalyses || !cfg.hubUrl) return;
-    return this.forUrl(cfg.hubUrl).submit(origin, termsHash, assessment, installationId, language);
+  async listReports(origin: string, language: string): Promise<readonly HubReportSummary[]> {
+    const cfg = await this.settingsRepo.load(); if (!cfg.hubUrl) return [];
+    const query = new URLSearchParams({ origin, language });
+    try { const res = await fetch(`${cfg.hubUrl}/v2/reports?${query}`, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
+      const body = await res.json() as { ok: boolean; data?: HubReportSummary[] }; return res.ok && body.ok ? body.data ?? [] : []; } catch { return []; }
   }
-
-  private forUrl(url: string): HttpHubClient {
-    if (!this.cache || this.cache.url !== url) {
-      this.cache = { url, client: new HttpHubClient(url) };
-    }
-    return this.cache.client;
+  async getReport(id: number): Promise<HubReport | null> {
+    const cfg = await this.settingsRepo.load(); if (!cfg.hubUrl) return null;
+    try { const res = await fetch(`${cfg.hubUrl}/v2/reports/${id}`, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
+      const body = await res.json() as { ok: boolean; data?: HubReport }; return res.ok && body.ok ? body.data ?? null : null; } catch { return null; }
   }
-}
-
-/** Low-level HTTP client for a single hub URL. Stateless beyond the base URL. */
-class HttpHubClient implements HubClient {
-  constructor(private readonly baseUrl: string) {}
-
-  async lookup(origin: string, termsHash: string): Promise<HubLookupResult | null> {
-    const url =
-      `${this.baseUrl}/analyses` +
-      `?origin=${encodeURIComponent(origin)}&hash=${encodeURIComponent(termsHash)}`;
+  async submit(origin: string, key: HubKey, assessment: RiskAssessment, _documents: readonly TermsDocument[]): Promise<void> {
+    const cfg = await this.settingsRepo.load(); if (!cfg.shareAnalyses || !cfg.hubUrl) return;
+    const body = JSON.stringify({ origin, ...key, provider: assessment.provenance.provider, model: assessment.provenance.model, assessment, findings: [] });
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
-      if (!res.ok) return null;
-      const body = (await res.json()) as { ok: boolean; data?: HubLookupResult };
-      return body.ok && body.data ? body.data : null;
-    } catch {
-      return null; // network errors are non-fatal
-    }
-  }
-
-  async submit(
-    origin: string,
-    termsHash: string,
-    assessment: RiskAssessment,
-    installationId: string,
-    language: string,
-  ): Promise<void> {
-    try {
-      await fetch(`${this.baseUrl}/analyses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          installationId,
-          origin,
-          termsHash,
-          result: assessment,
-          provider: assessment.provenance.provider ?? undefined,
-          model: assessment.provenance.model ?? undefined,
-          language,
-        }),
-        signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS),
-      });
-    } catch {
-      // Best-effort: never block the main flow on a hub submission failure.
-    }
+      let headers = await this.authenticator.signedHeaders(cfg.hubUrl, body); if (!headers) return;
+      let response = await fetch(`${cfg.hubUrl}/v2/analyses`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body, signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS) });
+      if (response.status === 401) { await this.authenticator.forgetRegistration(cfg.hubUrl); headers = await this.authenticator.signedHeaders(cfg.hubUrl, body);
+        if (headers) response = await fetch(`${cfg.hubUrl}/v2/analyses`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body, signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS) }); }
+      void response;
+    } catch { /* best effort */ }
   }
 }

@@ -5,6 +5,7 @@ import type { SiteAssessment } from '../domain/entities/site-assessment';
 import type { Settings } from '../domain/entities/settings';
 import type { ProviderKey } from '../domain/entities/provider-key';
 import type { ProviderId } from '../domain/value-objects/provider-id';
+import type { HubReportSummary } from '../domain/ports/hub';
 
 /** Credential as exposed to the UI — never includes the raw secret. */
 export type PublicKey = Omit<ProviderKey, 'secret'>;
@@ -15,6 +16,7 @@ export type BgRequest =
   | { kind: 'analyzeActiveTab' }
   | { kind: 'detectKeys'; input: KeyDetectionInput }
   | { kind: 'getPopupState'; origin: string; title: string }
+  | { kind: 'getHubReport'; id: number; origin: string; title: string }
   | { kind: 'getKeys' }
   | { kind: 'addManualKey'; provider: ProviderId; secret: string }
   | { kind: 'removeKey'; id: string }
@@ -26,12 +28,16 @@ export type ContentCommand =
   | { kind: 'collect' }
   | { kind: 'result'; ok: boolean; assessment: SiteAssessment | null; error: string | null }
   | { kind: 'prompt'; hotkey: string }
-  | { kind: 'keyDetected'; provider: string };
+  | { kind: 'keyDetected'; provider: string }
+  | { kind: 'showScore'; assessment: SiteAssessment }
+  | { kind: 'stale'; lastAnalysedAt: number }
+  | { kind: 'analyzing'; origin: string };
 
 export interface PopupState {
   readonly assessment: SiteAssessment;
   readonly settings: Settings;
   readonly keys: readonly PublicKey[];
+  readonly hubReports: readonly HubReportSummary[];
 }
 
 export type Envelope<T> = { ok: true; data: T } | { ok: false; error: string };
