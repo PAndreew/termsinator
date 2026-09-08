@@ -53,7 +53,7 @@ x-worker: &worker
     DATABASE_URL: postgres://termsinator:${POSTGRES_PASSWORD}@db:5432/termsinator?sslmode=disable
     PROCESSOR_EXECUTABLE: /app/process
     PROCESSOR_TIMEOUT: ${PROCESSOR_TIMEOUT:-20m}
-    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     OPENROUTER_MODEL: ${OPENROUTER_MODEL:-qwen/qwen3.7-flash}
   depends_on:
     db: { condition: service_healthy }
