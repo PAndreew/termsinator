@@ -15,7 +15,6 @@ echo "[deploy] active=$current next=$next tag=$tag"
 ${SSH[@]} "install -d -m 700 '$REMOTE_DIR'"
 rsync -az --delete \
   --exclude .git --exclude '.env*' --exclude frontend/node_modules --exclude frontend/dist \
-  --exclude processor/process \
   -e "ssh -i $SSH_KEY -o BatchMode=yes" "$(dirname "$0")/../" "$SERVER:$REMOTE_DIR/"
 
 ${SSH[@]} "set -euo pipefail
