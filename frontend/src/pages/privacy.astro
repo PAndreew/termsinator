@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Privacy policy">
+  <h1>Privacy policy</h1>
+  <p>Last updated: 8 September 2026</p>
+
+  <h2>Information processed</h2>
+  <p>When you request an analysis, Termsinator receives the submitted website URL and your network request. The submitted URL and resulting analysis are stored. Raw IP addresses are not stored in the application database. A keyed, daily rotating hash of the IP address is stored with the request to enforce abuse limits; it is not used as an account identifier.</p>
+
+  <h2>Browser extension</h2>
+  <p>In click-only mode, the extension sends the current hostname when you open it. In automatic mode, which you must enable, it sends each visited hostname. It does not send page paths, query strings, page titles, or page contents.</p>
+
+  <h2>Policy documents</h2>
+  <p>Workers may retrieve public terms, privacy policies, and related pages from submitted websites. Full extracted documents are retained for verification but are not published. Public reports contain short citations and links to their sources.</p>
+
+  <h2>Cookies and analytics</h2>
+  <p>Termsinator does not use analytics, advertising trackers, or user accounts. The current site does not set application cookies.</p>
+
+  <h2>Sharing</h2>
+  <p>Submitted URLs and policy text may be processed by the language-model providers identified in each report. Information may also be processed by infrastructure providers needed to host the service. Termsinator does not sell personal information.</p>
+
+  <h2>Retention and requests</h2>
+  <p>Published analyses are retained to preserve their history. Request records, including abuse-control hashes, are currently retained with the analysis history. Minimal infrastructure error logs are retained for service security and operation. To request correction or removal, open an issue in the public Termsinator repository.</p>
+</Base>

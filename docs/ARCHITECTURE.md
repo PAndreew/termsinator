@@ -78,16 +78,15 @@ Document bodies are public but potentially large. Keep compressed text in Postgr
 
 ### Astro frontend
 
-A minimal, server-free Astro build served by an unprivileged static container:
+A minimal, server-free Astro build served by an unprivileged static container has only:
 
-- home/search and anonymous URL submission with queued/running progress;
-- category/subcategory browsing and comparable rankings;
-- site summary;
-- aggregate report with a criterion comparison, every model/harness evaluation, evidence, disagreements, missing evidence, and actionable mitigations;
-- methodology/matrix/version history;
-- report dispute/correction link.
+- home with anonymous URL submission and inline queued/running progress;
+- analysed policies list with category filters and sorting;
+- methodology;
+- Termsinator's privacy policy; and
+- Termsinator's terms of use.
 
-No analytics or third-party scripts in the POC. This aligns product behavior with its privacy purpose.
+The analysed-policies view contains aggregate and per-model report detail as processing data becomes available. No analytics or third-party scripts are used.
 
 ### Extension and bookmarklet
 

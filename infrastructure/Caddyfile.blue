@@ -19,8 +19,4 @@ termsinator.46-62-240-211.sslip.io {
   handle {
     reverse_proxy web-blue:8080
   }
-  log {
-    output stdout
-    format json
-  }
 }

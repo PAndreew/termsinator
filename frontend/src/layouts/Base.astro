@@ -1,6 +1,6 @@
 ---
 interface Props { title: string; description?: string }
-const { title, description = 'Evidence-backed analysis of terms and privacy policies.' } = Astro.props;
+const { title, description = 'Analysis of website terms and privacy policies.' } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -8,15 +8,20 @@ const { title, description = 'Evidence-backed analysis of terms and privacy poli
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
-    <title>{title} · Termsinator</title>
+    <title>{title === 'Termsinator' ? title : `${title} · Termsinator`}</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header>
-      <a class="brand" href="/">termsinator</a>
-      <nav><a href="/rankings">rankings</a><a href="/methodology">methodology</a></nav>
+      <a class="brand" href="/">Termsinator</a>
+      <nav aria-label="Main navigation">
+        <a href="/analyses">Analysed policies</a>
+        <a href="/methodology">Methodology</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
     </header>
     <main><slot /></main>
-    <footer>Risk screening, not legal advice. No analytics. No account required.</footer>
+    <footer>Termsinator provides automated analysis, not legal advice.</footer>
   </body>
 </html>

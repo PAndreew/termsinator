@@ -42,6 +42,7 @@ func NewServer(db *sql.DB) http.Handler {
 	mux.HandleFunc("/v1/analysis-requests", s.analysisRequests)
 	mux.HandleFunc("/v1/analysis-requests/", s.analysisRequestStatus)
 	mux.HandleFunc("/v1/categories", s.categories)
+	mux.HandleFunc("/v1/analyses", s.analyses)
 	mux.HandleFunc("/v1/rankings", s.rankings)
 	mux.HandleFunc("/v1/sites/", s.siteRoutes)
 	return mux
@@ -102,6 +103,43 @@ ORDER BY po.created_at DESC LIMIT 1`, hostname).Scan(&summary)
 	w.Header().Set("Cache-Control", "public, max-age=300")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(summary)
+}
+
+func (s *Server) analyses(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+		return
+	}
+	rows, err := s.db.QueryContext(r.Context(), `
+SELECT summary FROM (
+  SELECT DISTINCT ON (ar.hostname) po.payload->'summary' AS summary, po.created_at
+  FROM processing_outputs po JOIN analysis_requests ar ON ar.id=po.analysis_request_id
+  WHERE ar.status='complete' AND po.payload ? 'summary'
+  ORDER BY ar.hostname, po.created_at DESC
+) current
+ORDER BY created_at DESC
+LIMIT 200`)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "request_failed"})
+		return
+	}
+	defer rows.Close()
+	results := make([]json.RawMessage, 0)
+	for rows.Next() {
+		var raw []byte
+		if err := rows.Scan(&raw); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "request_failed"})
+			return
+		}
+		results = append(results, json.RawMessage(raw))
+	}
+	if err := rows.Err(); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "request_failed"})
+		return
+	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	writeJSON(w, http.StatusOK, map[string]any{"results": results})
 }
 
 func (s *Server) rankings(w http.ResponseWriter, r *http.Request) {
