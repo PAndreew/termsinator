@@ -10,6 +10,7 @@ Termsinator is a risk-screening tool, not legal advice.
 
 - Anonymous URL submission with normalization and queued-job deduplication
 - PostgreSQL-leased private processing worker
+- Deterministic bounded policy discovery and smolagents/OpenRouter evaluator
 - Versioned report and public-summary contracts
 - Multi-model aggregation design with visible disagreement
 - Service taxonomy covering SaaS, physical products, sectors, subcategories, and facets
@@ -18,7 +19,7 @@ Termsinator is a risk-screening tool, not legal advice.
 - Manifest V3 extension with click-only/automatic switch
 - Hardened TLS edge and blue/green API/web/worker layout
 
-The production processing profile is intentionally disabled until a private `processor/process` executable is supplied. Submitted URLs remain queued meanwhile; see [`processor/README.md`](processor/README.md).
+The production processing profile remains disabled while the Qwen benchmark findings are addressed. Submitted URLs remain queued meanwhile; see [`processor/README.md`](processor/README.md) and the [ten-site benchmark](docs/BENCHMARK_QWEN_3_7.md).
 
 ## Development
 
@@ -44,6 +45,7 @@ Run the API with `DATABASE_URL` and `LISTEN_ADDR=:8080`. Run the worker with `DA
 - [Multi-model aggregation](docs/AGGREGATION.md)
 - [Service taxonomy and ranking](docs/TAXONOMY_AND_RANKING.md)
 - [Gaps and red–green TDD plan](docs/GAPS_AND_PLAN.md)
+- [Qwen 3.7 ten-site benchmark](docs/BENCHMARK_QWEN_3_7.md)
 - [Agent report JSON Schema](schemas/report-v1.schema.json)
 - [Public multi-model summary JSON Schema](schemas/public-summary-v1.schema.json)
 

@@ -7,4 +7,6 @@ frontend/.astro/
 *.test
 coverage.out
 infrastructure/Caddyfile.active
-processor/process
+processor/.venv/
+processor/__pycache__/
+processor/**/__pycache__/

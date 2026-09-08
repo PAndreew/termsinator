@@ -26,6 +26,7 @@ Versioned IDs form a two-level tree. Initial sectors:
 
 - `business_software`: productivity, collaboration, developer_tools, hosting_cloud, cybersecurity, crm_sales, finance_accounting, hr
 - `ai_services`: general_assistant, generative_media, coding_assistant, model_api, ai_search, vertical_ai
+- `internet_services`: web_search, email, browser, maps_navigation, identity, service_ecosystem
 - `commerce`: retailer, marketplace, payments, subscriptions_memberships, delivery
 - `finance`: banking, lending, investing, insurance, crypto
 - `social_communication`: social_network, messaging, dating, community_forum
@@ -33,7 +34,7 @@ Versioned IDs form a two-level tree. Initial sectors:
 - `health_wellness`: healthcare, mental_health, fitness, reproductive_health, health_device
 - `education`: school_platform, online_course, tutoring, learning_tool
 - `travel_mobility`: travel_booking, accommodation, ride_hailing, navigation, vehicle_service
-- `consumer_utilities`: smart_home, telecom, storage, identity, personal_productivity
+- `consumer_utilities`: smart_home, smart_tv, telecom, storage, identity, personal_productivity
 - `professional_services`: legal, consulting, recruiting, real_estate, logistics
 - `government_nonprofit`: government, nonprofit, public_utility
 - `other`

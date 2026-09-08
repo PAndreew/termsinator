@@ -2,4 +2,5 @@
 .env*
 frontend/node_modules
 frontend/dist
-processor/process
+processor/.venv
+processor/**/__pycache__

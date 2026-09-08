@@ -51,10 +51,10 @@ x-worker: &worker
   profiles: [processing]
   environment:
     DATABASE_URL: postgres://termsinator:${POSTGRES_PASSWORD}@db:5432/termsinator?sslmode=disable
-    PROCESSOR_EXECUTABLE: /processor/process
-    PROCESSOR_TIMEOUT: ${PROCESSOR_TIMEOUT:-15m}
-  volumes:
-    - ${PROCESSOR_DIR:-./processor}:/processor:ro
+    PROCESSOR_EXECUTABLE: /app/process
+    PROCESSOR_TIMEOUT: ${PROCESSOR_TIMEOUT:-20m}
+    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+    OPENROUTER_MODEL: ${OPENROUTER_MODEL:-qwen/qwen3.7-flash}
   depends_on:
     db: { condition: service_healthy }
   networks: [backend, egress]
