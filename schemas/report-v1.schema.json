@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://termsinator.example/schemas/report-v1.schema.json",
+  "title": "Termsinator agent report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "matrix_version",
+    "scan",
+    "site",
+    "agent",
+    "classification",
+    "discovery",
+    "documents",
+    "assessments",
+    "score",
+    "verdict",
+    "actions",
+    "limitations",
+    "attestation"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "matrix_version": { "const": "1.0.0" },
+    "scan": { "$ref": "#/$defs/scan" },
+    "site": { "$ref": "#/$defs/site" },
+    "agent": { "$ref": "#/$defs/agent" },
+    "classification": { "$ref": "#/$defs/classification" },
+    "discovery": { "$ref": "#/$defs/discovery" },
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/document" }
+    },
+    "assessments": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/assessment" }
+    },
+    "critical_flags": {
+      "type": "array",
+      "default": [],
+      "items": { "$ref": "#/$defs/criticalFlag" }
+    },
+    "score": { "$ref": "#/$defs/score" },
+    "verdict": { "$ref": "#/$defs/verdict" },
+    "actions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/action" }
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 1000 }
+    },
+    "attestation": { "$ref": "#/$defs/attestation" }
+  },
+  "$defs": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "httpsUrl": { "type": "string", "format": "uri", "pattern": "^https?://" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "confidence": { "enum": ["low", "medium", "high"] },
+    "scan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "started_at", "completed_at"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "started_at": { "$ref": "#/$defs/timestamp" },
+        "completed_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "site": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["submitted_root_url", "final_root_url", "hostname", "registrable_domain"],
+      "properties": {
+        "submitted_root_url": { "$ref": "#/$defs/httpsUrl" },
+        "final_root_url": { "$ref": "#/$defs/httpsUrl" },
+        "hostname": { "type": "string", "minLength": 1, "maxLength": 253 },
+        "registrable_domain": { "type": "string", "minLength": 1, "maxLength": 253 },
+        "service_name": { "type": ["string", "null"], "maxLength": 200 },
+        "assumed_jurisdictions": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 100 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["harness", "model"],
+      "properties": {
+        "harness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+            "version": { "type": ["string", "null"], "maxLength": 100 }
+          }
+        },
+        "model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider", "name"],
+          "properties": {
+            "provider": { "type": "string", "minLength": 1, "maxLength": 100 },
+            "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+            "version": { "type": ["string", "null"], "maxLength": 200 }
+          }
+        }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taxonomy_version", "primary_offering_type", "primary_sector", "primary_subcategory", "secondary_subcategories", "monetization", "audiences", "data_sensitivity", "relationship_facets", "confidence", "reasoning", "citations"],
+      "properties": {
+        "taxonomy_version": { "const": "1.0.0" },
+        "primary_offering_type": { "enum": ["saas", "downloaded_software", "physical_product", "marketplace_platform", "content_service", "professional_service", "connected_device", "hybrid", "other", "unclassified"] },
+        "secondary_offering_type": { "type": ["string", "null"], "enum": ["saas", "downloaded_software", "physical_product", "marketplace_platform", "content_service", "professional_service", "connected_device", "hybrid", "other", null] },
+        "primary_sector": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$" },
+        "primary_subcategory": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$" },
+        "secondary_subcategories": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$" } },
+        "monetization": { "type": "array", "uniqueItems": true, "items": { "enum": ["free", "freemium", "subscription", "one_time_purchase", "advertising", "transaction_fee", "data_monetization_disclosed", "enterprise_contract", "donation"] } },
+        "audiences": { "type": "array", "uniqueItems": true, "items": { "enum": ["consumer", "business", "developer", "education", "healthcare", "government", "children", "teen", "creator", "seller"] } },
+        "data_sensitivity": { "type": "array", "uniqueItems": true, "items": { "enum": ["ordinary", "financial", "health", "precise_location", "biometric", "communications", "children_data", "user_content"] } },
+        "relationship_facets": { "type": "array", "uniqueItems": true, "items": { "enum": ["account_required", "paid", "user_generated_content", "third_party_sellers", "physical_fulfilment", "automated_decisions", "generative_ai"] } },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "reasoning": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "citations": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/citation" } }
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["robots_respected", "pages_visited", "bytes_downloaded", "max_depth_reached", "truncated", "candidate_urls"],
+      "properties": {
+        "robots_respected": { "type": "boolean" },
+        "pages_visited": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "bytes_downloaded": { "type": "integer", "minimum": 0, "maximum": 20971520 },
+        "max_depth_reached": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "truncated": { "type": "boolean" },
+        "candidate_urls": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/httpsUrl" }
+        },
+        "notes": { "type": "array", "items": { "type": "string", "maxLength": 500 } }
+      }
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "title", "url", "relationship", "retrieved_at", "media_type", "language", "sha256", "character_count"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
+        "kind": { "enum": ["terms", "privacy", "cookies", "acceptable_use", "subscription", "ai_data_use", "community", "other"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "url": { "$ref": "#/$defs/httpsUrl" },
+        "relationship": { "enum": ["same_registrable_domain", "directly_linked_external_policy"] },
+        "retrieved_at": { "$ref": "#/$defs/timestamp" },
+        "effective_date": { "type": ["string", "null"], "format": "date" },
+        "media_type": { "enum": ["text/html", "text/plain", "application/pdf"] },
+        "language": { "type": "string", "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "character_count": { "type": "integer", "minimum": 1, "maximum": 2000000 }
+      }
+    },
+    "citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_id", "quote"],
+      "properties": {
+        "document_id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
+        "quote": { "type": "string", "minLength": 1, "maxLength": 1200 },
+        "heading": { "type": ["string", "null"], "maxLength": 300 },
+        "start_offset": { "type": ["integer", "null"], "minimum": 0 },
+        "end_offset": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["criterion_id", "category_id", "score", "evidence_status", "confidence", "summary", "reasoning", "citations"],
+      "properties": {
+        "criterion_id": { "type": "string", "pattern": "^(DCP|SST|RSR|CIA|CTA|PRL|DGT|TAV)-[1-9][0-9]*$" },
+        "category_id": { "enum": ["DCP", "SST", "RSR", "CIA", "CTA", "PRL", "DGT", "TAV"] },
+        "score": { "type": ["integer", "null"], "minimum": 0, "maximum": 4 },
+        "evidence_status": { "enum": ["supported", "partial", "not_found", "inaccessible", "not_applicable"] },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "reasoning": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "citations": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/citation" } }
+      }
+    },
+    "criticalFlag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "confidence", "explanation", "citations"],
+      "properties": {
+        "code": { "enum": ["content_appropriation", "uncontrolled_ai_training", "data_sale_no_control", "silent_material_changes", "termination_without_exit", "rights_waiver_trap", "child_safety_gap"] },
+        "confidence": { "enum": ["medium", "high"] },
+        "explanation": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "citations": { "type": "array", "minItems": 1, "maxItems": 5, "items": { "$ref": "#/$defs/citation" } }
+      }
+    },
+    "categoryScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category_id", "score", "coverage"],
+      "properties": {
+        "category_id": { "enum": ["DCP", "SST", "RSR", "CIA", "CTA", "PRL", "DGT", "TAV"] },
+        "score": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "coverage": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw", "capped", "coverage", "low_confidence_weight", "categories"],
+      "properties": {
+        "raw": { "type": "number", "minimum": 0, "maximum": 100 },
+        "capped": { "type": "number", "minimum": 0, "maximum": 100 },
+        "coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+        "low_confidence_weight": { "type": "number", "minimum": 0, "maximum": 1 },
+        "categories": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "$ref": "#/$defs/categoryScore" } }
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "headline", "rationale"],
+      "properties": {
+        "label": { "enum": ["user_respecting", "low_concern", "caution", "high_concern", "severe_concern", "insufficient_evidence"] },
+        "headline": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "rationale": { "type": "string", "minLength": 1, "maxLength": 1000 }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "priority", "effort", "title", "steps", "criterion_ids"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
+        "type": { "enum": ["before_signup", "settings", "data_minimization", "rights_request", "billing", "account_exit", "monitor"] },
+        "priority": { "enum": ["urgent", "recommended", "optional"] },
+        "effort": { "enum": ["low", "medium", "high"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "steps": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 500 } },
+        "criterion_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^(DCP|SST|RSR|CIA|CTA|PRL|DGT|TAV)-[1-9][0-9]*$" } },
+        "supporting_citations": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/citation" } }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent_generated", "content_treated_as_untrusted", "no_fabricated_citations", "submitted_at"],
+      "properties": {
+        "agent_generated": { "const": true },
+        "content_treated_as_untrusted": { "const": true },
+        "no_fabricated_citations": { "const": true },
+        "submitted_at": { "$ref": "#/$defs/timestamp" }
+      }
+    }
+  }
+}

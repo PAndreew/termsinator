@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Read the terms before they read you">
+  <p class="pill">public proof of concept</p>
+  <h1>Terms, without the ambush.</h1>
+  <p class="lede">Submit a site. Termsinator finds its legal policies, asks multiple models to evaluate the same evidence, and shows where they agree—or do not.</p>
+  <form id="analyze">
+    <label style="position:absolute;left:-9999px" for="url">Website URL</label>
+    <input id="url" name="url" type="url" required placeholder="https://example.com" autocomplete="url" />
+    <button type="submit">Analyze terms</button>
+  </form>
+  <div id="status" class="status" role="status" aria-live="polite"></div>
+  <p class="quiet">No account or email. Public pages only. Submissions may be rate-limited to control processing costs.</p>
+
+  <section>
+    <h2>Compare like with like</h2>
+    <p>Browse SaaS, physical products, marketplaces, connected devices, and sector-specific subcategories. Rankings always show model count, disagreement, coverage, and report age.</p>
+    <a href="/rankings">Browse categories →</a>
+  </section>
+
+  <script>
+    const form = document.querySelector('#analyze');
+    const status = document.querySelector('#status');
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const input = document.querySelector('#url');
+      if (!(input instanceof HTMLInputElement) || !(status instanceof HTMLElement)) return;
+      status.textContent = 'Submitting…';
+      try {
+        const response = await fetch('/api/v1/analysis-requests', {
+          method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({url: input.value})
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Submission failed');
+        status.innerHTML = `Analysis <strong>${result.status}</strong>. <a href="/request/?id=${encodeURIComponent(result.id)}">Follow progress →</a>`;
+      } catch (error) {
+        status.textContent = error instanceof Error ? error.message : 'Submission failed';
+      }
+    });
+  </script>
+</Base>

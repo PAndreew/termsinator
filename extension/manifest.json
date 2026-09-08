@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Termsinator",
+  "version": "0.1.0",
+  "description": "See evidence-backed terms and privacy risk summaries for the current site.",
+  "permissions": ["activeTab", "storage"],
+  "optional_permissions": ["tabs"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "host_permissions": ["https://termsinator.46-62-240-211.sslip.io/*", "http://localhost:8080/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup.html", "default_title": "Check terms" }
+}

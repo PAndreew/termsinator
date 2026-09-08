@@ -1,6 +1,10 @@
-node_modules/
-dist/
-coverage/
-*.log
-.DS_Store
-.vite/
+.env
+.env.*
+!.env.example
+frontend/node_modules/
+frontend/dist/
+frontend/.astro/
+*.test
+coverage.out
+infrastructure/Caddyfile.active
+processor/process

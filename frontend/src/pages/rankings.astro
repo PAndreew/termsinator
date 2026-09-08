@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Rankings">
+  <p class="pill">taxonomy v1.0.0</p>
+  <h1>Compare services</h1>
+  <p class="lede">Choose an offering and sector. Termsinator ranks only current, sufficiently evidenced reports evaluated under the same matrix.</p>
+  <div class="grid" id="categories"><p>Loading categories…</p></div>
+  <section class="status"><strong>No global leaderboard.</strong> A SaaS assistant and a physical product create different risks. Rankings remain within comparable cohorts and disclose model disagreement.</section>
+  <script>
+    const target = document.querySelector('#categories');
+    fetch('/api/v1/categories').then(r => r.json()).then(data => {
+      if (!(target instanceof HTMLElement)) return;
+      target.innerHTML = data.offering_types.map((item: {id: string; label: string}) => `<a class="card" href="/rankings/?offering_type=${encodeURIComponent(item.id)}"><strong>${item.label}</strong><br><span class="quiet">${item.id}</span></a>`).join('');
+    }).catch(() => { if (target instanceof HTMLElement) target.textContent = 'Categories unavailable.'; });
+  </script>
+</Base>

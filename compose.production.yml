@@ -1,0 +1,122 @@
+x-api: &api
+  image: termsinator-api:${IMAGE_TAG:-dev}
+  build:
+    context: .
+    dockerfile: Dockerfile.api
+  restart: unless-stopped
+  environment:
+    DATABASE_URL: postgres://termsinator:${POSTGRES_PASSWORD}@db:5432/termsinator?sslmode=disable
+    LISTEN_ADDR: :8080
+    ABUSE_HASH_KEY: ${ABUSE_HASH_KEY}
+  depends_on:
+    db: { condition: service_healthy }
+  networks: [frontend, backend]
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  mem_limit: 96m
+  cpus: 0.50
+  healthcheck:
+    test: [CMD, wget, -qO-, http://127.0.0.1:8080/health/ready]
+    interval: 10s
+    timeout: 3s
+    retries: 10
+
+x-web: &web
+  image: termsinator-web:${IMAGE_TAG:-dev}
+  build:
+    context: .
+    dockerfile: Dockerfile.web
+  restart: unless-stopped
+  networks: [frontend]
+  read_only: true
+  tmpfs: [/tmp, /var/cache/nginx, /var/run]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  mem_limit: 48m
+  cpus: 0.25
+  healthcheck:
+    test: [CMD, wget, -qO-, http://127.0.0.1:8080/]
+    interval: 10s
+    timeout: 3s
+    retries: 10
+
+x-worker: &worker
+  image: termsinator-worker:${IMAGE_TAG:-dev}
+  build:
+    context: .
+    dockerfile: Dockerfile.worker
+  restart: unless-stopped
+  profiles: [processing]
+  environment:
+    DATABASE_URL: postgres://termsinator:${POSTGRES_PASSWORD}@db:5432/termsinator?sslmode=disable
+    PROCESSOR_EXECUTABLE: /processor/process
+    PROCESSOR_TIMEOUT: ${PROCESSOR_TIMEOUT:-15m}
+  volumes:
+    - ${PROCESSOR_DIR:-./processor}:/processor:ro
+  depends_on:
+    db: { condition: service_healthy }
+  networks: [backend, egress]
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  mem_limit: 512m
+  cpus: 1.0
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: termsinator
+      POSTGRES_USER: termsinator
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    networks: [backend]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.75
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U termsinator -d termsinator]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  api-blue: { <<: *api }
+  api-green: { <<: *api }
+  web-blue: { <<: *web }
+  web-green: { <<: *web }
+  worker-blue: { <<: *worker }
+  worker-green: { <<: *worker }
+
+  edge:
+    image: caddy:2.9-alpine
+    restart: unless-stopped
+    ports: [80:80, 443:443, 443:443/udp]
+    command: ["caddy", "run", "--config", "/etc/termsinator/Caddyfile.active", "--adapter", "caddyfile"]
+    volumes:
+      - ./infrastructure:/etc/termsinator:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [frontend]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    mem_limit: 96m
+    cpus: 0.50
+
+networks:
+  frontend:
+    internal: false
+  backend:
+    internal: true
+  egress:
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

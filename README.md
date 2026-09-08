@@ -1,79 +1,56 @@
 # Termsinator
 
-Termsinator is a bring-your-own-key browser extension that finds a site's Terms
-of Service and Privacy Policy, extracts verifiable evidence, and grades how
-intrusive or privacy-invasive the disclosed practices are.
+Evidence-backed, multi-model risk assessments of public terms and privacy policies.
 
-## What it does
+**Live POC:** https://termsinator.46-62-240-211.sslip.io
 
-- Discovers legal pages from the active site.
-- Sanitizes policy text before analysis.
-- Supports OpenAI-compatible providers, Anthropic, and Google Gemini.
-- Requires exact source quotes for every numeric privacy classification.
-- Evaluates 43 versioned privacy attributes across eight dimensions.
-- Calculates the risk score and A-F grade locally; the model never performs the
-  scoring math.
-- Reports evidence-backed facts and concrete protective actions, including
-  deletion or stopping use when proportionate.
-- Falls back to conservative local phrase checks when no model key is present.
-- Stores API keys and assessments in browser-local extension storage.
+Termsinator is a risk-screening tool, not legal advice.
 
-Community sharing is optional and disabled by default. When enabled, submissions
-are signed with a locally generated P-256 identity and sent to a separately
-configured Termsinator Hub.
+## Current capabilities
 
-## Grading
+- Anonymous URL submission with normalization and queued-job deduplication
+- PostgreSQL-leased private processing worker
+- Versioned report and public-summary contracts
+- Multi-model aggregation design with visible disagreement
+- Service taxonomy covering SaaS, physical products, sectors, subcategories, and facets
+- Category-filtered ranking API
+- Minimal static Astro interface
+- Manifest V3 extension with click-only/automatic switch
+- Hardened TLS edge and blue/green API/web/worker layout
 
-The current contract is analysis schema `3`, prompt version `3`, and rubric
-`privacy-rubric-1`. The model returns:
-
-- exact evidence excerpts;
-- one classification for every rubric attribute;
-- evidence-backed summary facts;
-- structured, actionable user tasks.
-
-The extension validates that evidence occurs verbatim in the supplied document,
-then calculates practice risk, disclosure floors, severe-practice floors,
-coverage, confidence, and the final grade deterministically.
-
-See [the grading rubric](docs/privacy-grading-rubric-v1.md) and
-[analysis prompt v3](docs/analysis-prompt-v3.md).
+The production processing profile is intentionally disabled until a private `processor/process` executable is supplied. Submitted URLs remain queued meanwhile; see [`processor/README.md`](processor/README.md).
 
 ## Development
 
+Requirements: Go 1.19+, Node 22, pnpm 10, PostgreSQL 16.
+
 ```bash
-npm install
-npm test
-npm run typecheck
-npm run lint
-npm run build
+# Start a test database
+docker run --rm --name termsinator-test-db \
+  -e POSTGRES_PASSWORD=test -e POSTGRES_DB=termsinator_test \
+  -p 127.0.0.1:55432:5432 postgres:16-alpine
+
+TEST_DATABASE_URL='postgres://postgres:test@127.0.0.1:55432/termsinator_test?sslmode=disable' go test ./...
+pnpm --dir frontend install
+pnpm --dir frontend build
 ```
 
-Build output is written to `dist/chrome` and `dist/firefox`.
+Run the API with `DATABASE_URL` and `LISTEN_ADDR=:8080`. Run the worker with `DATABASE_URL`, `PROCESSOR_EXECUTABLE`, and optional `PROCESSOR_TIMEOUT`.
 
-## Loading the extension
+## Documentation
 
-Chrome or Edge:
+- [Architecture](docs/ARCHITECTURE.md)
+- [Evaluation matrix v1.0.0](docs/EVALUATION_MATRIX.md)
+- [Multi-model aggregation](docs/AGGREGATION.md)
+- [Service taxonomy and ranking](docs/TAXONOMY_AND_RANKING.md)
+- [Gaps and red–green TDD plan](docs/GAPS_AND_PLAN.md)
+- [Agent report JSON Schema](schemas/report-v1.schema.json)
+- [Public multi-model summary JSON Schema](schemas/public-summary-v1.schema.json)
 
-1. Run `npm run build:chrome`.
-2. Open `chrome://extensions` and enable Developer mode.
-3. Choose Load unpacked and select `dist/chrome`.
+## Deployment
 
-Firefox:
+`compose.production.yml` defines singleton PostgreSQL/Caddy and blue/green API, web, and worker services. `scripts/deploy.sh` builds the inactive color, waits for health, switches Caddy, performs a public smoke test, then stops the old color. Only ports 80/443 are publicly bound.
 
-1. Run `npm run build:firefox`.
-2. Open `about:debugging#/runtime/this-firefox`.
-3. Choose Load Temporary Add-on and select a file under `dist/firefox`.
+## Open-source status
 
-## Privacy and security
-
-- API keys are used directly from the extension and are not sent to the hub.
-- Key detection runs only on known provider dashboard hosts.
-- No telemetry is included.
-- Hub sharing is opt-in.
-- URL discovery responses are restricted to URLs supplied to the model.
-- Imported hub reports are not automatically resubmitted.
-
-## License
-
-MIT
+CI and `CODEOWNERS` are prepared for a protected `main` branch. A license must be selected before publishing the GitHub repository.

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://termsinator.example/schemas/public-summary-v1.schema.json",
+  "title": "Termsinator public multi-model summary v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "hostname", "classification", "policy_revision", "aggregate", "consensus", "evaluations", "top_risks", "top_actions", "full_report_url", "generated_at"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "hostname": { "type": "string", "minLength": 1, "maxLength": 253 },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taxonomy_version", "offering_type", "sector", "subcategory", "confidence", "facets"],
+      "properties": {
+        "taxonomy_version": { "const": "1.0.0" },
+        "offering_type": { "enum": ["saas", "downloaded_software", "physical_product", "marketplace_platform", "content_service", "professional_service", "connected_device", "hybrid", "other", "unclassified"] },
+        "sector": { "type": "string" },
+        "subcategory": { "type": "string" },
+        "confidence": { "enum": ["low", "medium", "high"] },
+        "facets": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+      }
+    },
+    "policy_revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bundle_id", "source_date", "matrix_version"],
+      "properties": {
+        "bundle_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "source_date": { "type": "string", "format": "date-time" },
+        "matrix_version": { "type": "string" }
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trust", "score", "verdict", "model_count"],
+      "properties": {
+        "trust": { "enum": ["service_processed", "single_model"] },
+        "score": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "verdict": { "enum": ["user_respecting", "low_concern", "caution", "high_concern", "severe_concern", "insufficient_evidence"] },
+        "model_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "consensus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score_min", "score_max", "unanimous", "close", "mixed", "polarized", "applicability_disagreements", "critical_flag_disagreements"],
+      "properties": {
+        "score_min": { "type": "number", "minimum": 0, "maximum": 100 },
+        "score_max": { "type": "number", "minimum": 0, "maximum": 100 },
+        "unanimous": { "type": "integer", "minimum": 0 },
+        "close": { "type": "integer", "minimum": 0 },
+        "mixed": { "type": "integer", "minimum": 0 },
+        "polarized": { "type": "integer", "minimum": 0 },
+        "applicability_disagreements": { "type": "integer", "minimum": 0 },
+        "critical_flag_disagreements": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "evaluations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evaluation_id", "provider", "model", "harness", "trust_tier", "included_in_aggregate", "score", "verdict", "coverage", "evaluated_at"],
+        "properties": {
+          "evaluation_id": { "type": "string", "format": "uuid" },
+          "provider": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "model": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "model_version": { "type": ["string", "null"], "maxLength": 200 },
+          "harness": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "harness_version": { "type": ["string", "null"], "maxLength": 100 },
+          "trust_tier": { "const": "service_processed" },
+          "included_in_aggregate": { "type": "boolean" },
+          "exclusion_reason": { "type": ["string", "null"], "maxLength": 300 },
+          "score": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+          "verdict": { "enum": ["user_respecting", "low_concern", "caution", "high_concern", "severe_concern", "insufficient_evidence"] },
+          "coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+          "evaluated_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "top_risks": { "type": "array", "maxItems": 3, "items": { "$ref": "#/$defs/highlight" } },
+    "top_actions": { "type": "array", "maxItems": 3, "items": { "$ref": "#/$defs/highlight" } },
+    "full_report_url": { "type": "string", "format": "uri", "pattern": "^https?://" },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "highlight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "model_support"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "model_support": { "type": "integer", "minimum": 1 },
+        "criterion_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    }
+  }
+}
