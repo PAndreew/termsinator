@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "description": "Manually checked primary public policy URLs. Each required regex must match one discovered document URL.",
+  "sites": [
+    {"name":"amazon","url":"https://www.amazon.com","required":["nodeId=GLSBYFE9MGKKQXXM","nodeId=GX7NJQ4ZB8MHFRNJ"]},
+    {"name":"microsoft","url":"https://www.microsoft.com","required":["/en-us/servicesagreement$","/en-us/privacy/privacystatement$"]},
+    {"name":"google","url":"https://www.google.com","required":["policies\\.google\\.com/terms","policies\\.google\\.com/privacy"]},
+    {"name":"netflix","url":"https://www.netflix.com","required":["help\\.netflix\\.com/legal/termsofuse","help\\.netflix\\.com/legal/privacy"]},
+    {"name":"openai","url":"https://openai.com","required":["/policies/terms-of-use/?$","/policies/privacy-policy/?$"]},
+    {"name":"spotify","url":"https://www.spotify.com","required":["/legal/end-user-agreement/?$","/legal/privacy-policy/?$"]},
+    {"name":"adobe","url":"https://www.adobe.com","required":["/legal/terms\\.html$","/privacy/policy\\.html$"]},
+    {"name":"apple","url":"https://www.apple.com","required":["/legal/internet-services/terms/site\\.html$","/legal/privacy/(?:en-ww/)?$"]},
+    {"name":"meta","url":"https://www.meta.com","required":["/legal/terms-of-sale/?$","/legal/privacy-policy/?$"]},
+    {"name":"lg-smart-tv","url":"https://www.lg.com/us/tvs","required":["/us/terms-purchase$","/us/legal/privacy-policy/?$"]}
+  ]
+}

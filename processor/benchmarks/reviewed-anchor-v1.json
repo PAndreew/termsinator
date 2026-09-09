@@ -1,0 +1,61 @@
+{
+  "version": "1.0.0",
+  "status": "assistant_reviewed_seed_not_human_gold",
+  "description": "Small clause-level anchor set for detecting gross scoring drift. Ranges reflect the rubric, not legal advice.",
+  "sites": {
+    "amazon": {
+      "hostname": "www.amazon.com",
+      "expected_verdicts": ["high_concern"],
+      "criteria": {
+        "SST-2": {"min": 3, "max": 4, "note": "No-sale statement and advertising controls."},
+        "RSR-1": {"min": 1, "max": 2, "note": "Purpose-based retention without comprehensive periods."},
+        "CIA-1": {"min": 0, "max": 1, "note": "Perpetual, irrevocable, fully sublicensable content license."},
+        "CIA-2": {"min": 0, "max": 1, "note": "Derivative, publication and distribution rights are broad."},
+        "CTA-1": {"min": 0, "max": 1, "note": "Site policies may change and continued use binds users."},
+        "CTA-2": {"min": 1, "max": 2, "note": "Broad refusal and termination discretion."},
+        "PRL-3": {"min": 0, "max": 1, "note": "Broad warranty and damages disclaimers."},
+        "PRL-4": {"min": 2, "max": 3, "note": "Indemnity is broad but tied to user-supplied content."},
+        "DGT-1": {"min": 0, "max": 1, "note": "Mandatory binding arbitration."},
+        "DGT-2": {"min": 0, "max": 1, "note": "Mandatory individual proceeding and class waiver."},
+        "DGT-3": {"min": 1, "max": 2, "note": "Washington law and King County provisions."},
+        "TAV-1": {"min": 3, "max": 4, "note": "Provider and update dates are disclosed."}
+      }
+    },
+    "microsoft": {
+      "hostname": "www.microsoft.com",
+      "expected_verdicts": ["low_concern", "caution"],
+      "criteria": {
+        "SST-2": {"min": 3, "max": 4, "note": "Advertising opt-out and GPC support."},
+        "RSR-1": {"min": 1, "max": 2, "note": "Retention criteria vary by product and purpose."},
+        "CIA-1": {"min": 3, "max": 4, "note": "User ownership retained; operational license."},
+        "CIA-2": {"min": 3, "max": 4, "note": "Content rights generally tied to service provision."},
+        "CTA-1": {"min": 1, "max": 2, "note": "Use after changes can constitute acceptance."},
+        "CTA-2": {"min": 2, "max": 3, "note": "Enumerated suspension grounds with uneven appeal detail."},
+        "PRL-3": {"min": 0, "max": 1, "note": "Broad disclaimers and low contractual liability cap."},
+        "PRL-4": {"min": 3, "max": 4, "note": "No broad consumer indemnity found in the reviewed agreement."},
+        "DGT-1": {"min": 2, "max": 3, "note": "US arbitration includes an opt-out."},
+        "DGT-2": {"min": 2, "max": 3, "note": "Class waiver is paired with arbitration opt-out."},
+        "DGT-3": {"min": 2, "max": 3, "note": "Venue terms preserve mandatory local rights."},
+        "TAV-1": {"min": 4, "max": 4, "note": "Identity, dates and version information are clear."}
+      }
+    },
+    "netflix": {
+      "hostname": "www.netflix.com",
+      "expected_verdicts": ["low_concern"],
+      "criteria": {
+        "SST-2": {"min": 3, "max": 4, "note": "Behavioral-advertising controls are disclosed."},
+        "RSR-1": {"min": 1, "max": 2, "note": "Purpose-based criteria but few fixed periods."},
+        "CIA-1": {"min": 3, "max": 4, "note": "No broad appropriation of user content found."},
+        "CIA-2": {"min": 3, "max": 4, "note": "No broad commercialization license found."},
+        "CTA-1": {"min": 3, "max": 4, "note": "Advance notice and cancellation right."},
+        "CTA-2": {"min": 2, "max": 3, "note": "Grounds are stated but appeal detail is limited."},
+        "PRL-3": {"min": 4, "max": 4, "note": "No broad warranty or liability disclaimer found in the complete terms."},
+        "PRL-4": {"min": 4, "max": 4, "note": "No consumer indemnity found in the complete terms."},
+        "DGT-1": {"min": 4, "max": 4, "note": "No arbitration clause found."},
+        "DGT-2": {"min": 4, "max": 4, "note": "No class or jury waiver found."},
+        "DGT-3": {"min": 3, "max": 4, "note": "Netherlands law preserves mandatory residence protections."},
+        "TAV-1": {"min": 3, "max": 4, "note": "Entity, contacts and policy dates are available."}
+      }
+    }
+  }
+}

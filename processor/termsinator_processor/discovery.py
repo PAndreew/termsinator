@@ -18,11 +18,23 @@ KNOWN_POLICY_URLS = {
         ("https://www.amazon.com/gp/help/customer/display.html?nodeId=GLSBYFE9MGKKQXXM", "Conditions of Use"),
         ("https://www.amazon.com/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ", "Privacy Notice"),
     ),
+    "microsoft.com": (
+        ("https://www.microsoft.com/en-us/servicesagreement", "Microsoft Services Agreement"),
+        ("https://www.microsoft.com/en-us/privacy/privacystatement", "Microsoft Privacy Statement"),
+    ),
+    "meta.com": (
+        ("https://www.meta.com/legal/terms-of-sale/", "Terms of Sale"),
+        ("https://www.meta.com/legal/privacy-policy/", "Privacy Policy"),
+    ),
+    "lg.com": (
+        ("https://www.lg.com/us/terms-purchase", "Terms of Purchase"),
+        ("https://www.lg.com/us/legal/privacy-policy/", "Privacy Policy"),
+    ),
 }
 
 LEGAL_TERMS = {
     "privacy": ("privacy", "datenschutz", "confidentialite", "privacidad", "privacidade"),
-    "terms": ("terms", "conditions", "tos", "bedingungen", "condiciones", "legal terms"),
+    "terms": ("terms", "conditions", "terms of use", "service agreement", "services agreement", "user agreement", "tos", "bedingungen", "condiciones", "legal terms"),
     "cookies": ("cookie", "tracking technologies"),
     "acceptable_use": ("acceptable use", "aup", "usage policy"),
     "subscription": ("subscription", "billing", "refund", "cancellation"),
