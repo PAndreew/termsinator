@@ -392,12 +392,18 @@ NUMBERED EVIDENCE PASSAGES:
             cap = FLAG_CAP[flag["code"]]
             if VERDICT_ORDER.index(label) > VERDICT_ORDER.index(cap): label = cap
         if coverage < .7 or low_fraction > .25: label = "insufficient_evidence"
+        if coverage < .7:
+            rationale = f"Usable evidence covered {coverage:.0%} of the weighted matrix; at least 70% is required to publish a score."
+        elif low_fraction > .25:
+            rationale = f"Low-confidence findings covered {low_fraction:.0%} of the weighted matrix; no more than 25% is allowed."
+        else:
+            rationale = "Calculated from the versioned matrix, evidence coverage, confidence, and critical flags."
         cap_scores = {"user_respecting": 100, "low_concern": 84.9, "caution": 69.9, "high_concern": 49.9, "severe_concern": 29.9, "insufficient_evidence": raw}
         capped = min(raw, cap_scores[label]) if label != "insufficient_evidence" else raw
         return {"raw": raw, "capped": round(capped, 1), "coverage": round(coverage, 4),
                 "low_confidence_weight": round(low_fraction, 4), "categories": categories,
                 "verdict": {"label": label, "headline": label.replace("_", " ").title(),
-                            "rationale": "Calculated from the versioned matrix, evidence coverage, confidence, and critical flags."}}
+                            "rationale": rationale}}
 
     def _verdict(self, score):
         if score >= 85: return "user_respecting"

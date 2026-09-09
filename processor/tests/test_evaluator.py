@@ -62,6 +62,12 @@ class EvaluatorTest(unittest.TestCase):
         self.assertEqual(assessment["evidence_status"], "not_found")
         self.assertEqual(assessment["citations"], [])
 
+    def test_insufficient_evidence_verdict_explains_the_threshold(self):
+        assessments = [Evaluator()._assessment(criterion_id, None, {}) for criterion_id in CRITERION_IDS]
+        result = Evaluator()._score(assessments, [])
+        self.assertEqual(result["verdict"]["label"], "insufficient_evidence")
+        self.assertIn("at least 70%", result["verdict"]["rationale"])
+
     def test_critical_flag_requires_clause_that_supports_the_trigger(self):
         evaluator = Evaluator()
         document = Document("doc-1", "terms", "Terms", "https://example.com/terms", "You must not use content to train any machine learning model.", "b" * 64, "2026-09-08T00:00:00Z")
