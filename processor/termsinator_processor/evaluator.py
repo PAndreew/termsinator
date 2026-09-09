@@ -158,7 +158,8 @@ NUMBERED EVIDENCE PASSAGES:
         verdict = score.pop("verdict")
         document_contexts = self._document_contexts(docs.values())
         if len(document_contexts) > 1:
-            verdict = {"label": "insufficient_evidence", "explanation": "Discovered policies mix regional contexts."}
+            verdict = {"label": "insufficient_evidence", "headline": "Mixed regional policy contexts",
+                       "rationale": "Discovered policies from more than one explicit regional context cannot be scored together."}
             raw.setdefault("limitations", []).append("Mixed regional policy contexts: " + ", ".join(document_contexts))
         bundle_id = hashlib.sha256("\n".join(sorted(f"{d.kind}\0{d.url}\0{d.sha256}" for d in docs.values())).encode()).hexdigest()
         report = {
@@ -244,6 +245,8 @@ NUMBERED EVIDENCE PASSAGES:
                 continue
             first = parts[0]
             if re.fullmatch(r"[a-z]{2}-[a-z]{2}", first) or first in {"us", "uk", "eu", "eea", "row"}:
+                contexts.add(first)
+            elif re.fullmatch(r"[a-z]{2}", first) and len(parts) > 1 and parts[1] in {"legal", "policies", "privacy", "terms"}:
                 contexts.add(first)
             elif len(parts) > 1 and first in {"legal", "policies"} and parts[1] in {"us", "uk", "eu", "eea", "row"}:
                 contexts.add(parts[1])

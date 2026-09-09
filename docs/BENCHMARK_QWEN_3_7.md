@@ -68,6 +68,18 @@ The eight-document cap selected historical or product-specific documents for bro
 
 These safeguards have unit coverage but the full ten-site benchmark has not yet been rerun, so they are not evidence that the quality gate passes.
 
+## Focused post-safeguard validation
+
+Five problematic sites were rerun while the safeguards were being finalized:
+
+- Amazon: privacy-only discovery now yields 59.2% coverage and `insufficient_evidence`, rather than a caution score based partly on the wrong document class.
+- Microsoft: privacy-only, mixed `en-us`/`hu-hu` discovery yields 59.8% coverage and `insufficient_evidence`.
+- Netflix: the unsupported AI-training critical flag disappeared; the uncapped output was 78.5 with 88.4% coverage. This is structurally improved, not a human endorsement of the score.
+- Spotify: document-class validation produced 96.7% coverage and removed the unsupported content-appropriation cap. The run occurred before two-letter locale paths were included in the regional detector; its `hu` and `us` documents would now be rejected as a mixed bundle.
+- LG: privacy content became reachable on retry, but Qwen supported only 16.3% of the matrix, so the report remained `insufficient_evidence`. The surviving critical citations were lexically consistent with their trigger clauses, but product scope remains unresolved.
+
+These runs used 36,205–165,391 input tokens and 4,394–4,864 output tokens each. The five-site mean was about 86,000 input and 4,600 output tokens. At illustrative rates of $0.03/M input and $0.13/M output, that is about $3,180 per million universal evaluations before OpenRouter fees, retries, discovery, and escalation. With a 5.5% fee and 15% retry/oversize allowance, it is roughly $3,850 per million. Actual billing must be recorded rather than inferred from token counts.
+
 ## Decision
 
 Do not enable production workers or publish these ten ratings yet. The processing path is operational, but the results are suitable only as a benchmark.

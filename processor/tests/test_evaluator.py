@@ -12,10 +12,11 @@ from termsinator_processor.evaluator import CRITERION_IDS, Evaluator
 class EvaluatorTest(unittest.TestCase):
     def test_builds_schema_valid_report_and_rejects_fabricated_quote(self):
         text = "Users retain ownership. We collect account data to provide the service."
-        document = Document("doc-1", "terms", "Terms", "https://example.com/terms", text, "a" * 64, "2026-09-08T00:00:00Z")
+        document = Document("doc-1", "terms", "Terms", "https://example.com/en-us/terms", text, "a" * 64, "2026-09-08T00:00:00Z")
+        regional_document = Document("doc-2", "terms", "Terms", "https://example.com/hu-hu/terms", text, "b" * 64, "2026-09-08T00:00:00Z")
         discovery = SimpleNamespace(
             root_url="https://example.com/", final_root_url="https://example.com/", hostname="example.com",
-            documents=[document], candidate_urls=[document.url], pages_visited=3, bytes_downloaded=1000,
+            documents=[document, regional_document], candidate_urls=[document.url], pages_visited=3, bytes_downloaded=1000,
             robots_respected=True, truncated=False, root_text="Example software service",
         )
         assessments = []
@@ -35,6 +36,8 @@ class EvaluatorTest(unittest.TestCase):
         output = Evaluator().build_output("00000000-0000-4000-8000-000000000001", discovery, raw)
         self.assertEqual(output["report"]["assessments"][0]["evidence_status"], "not_found")
         self.assertIsNone(output["report"]["assessments"][0]["score"])
+        self.assertEqual(output["summary"]["aggregate"]["verdict"], "insufficient_evidence")
+        self.assertIsNone(output["summary"]["aggregate"]["score"])
         root = Path(__file__).parents[2]
         for name, value in [("report-v1.schema.json", output["report"]), ("public-summary-v1.schema.json", output["summary"])]:
             schema = json.loads((root / "schemas" / name).read_text())
@@ -43,10 +46,10 @@ class EvaluatorTest(unittest.TestCase):
 
     def test_detects_mixed_regional_policy_contexts(self):
         documents = [
-            Document("doc-1", "privacy", "Privacy", "https://example.com/en-us/privacy", "text", "d" * 64, "2026-09-08T00:00:00Z"),
-            Document("doc-2", "terms", "Terms", "https://example.com/hu-hu/terms", "text", "e" * 64, "2026-09-08T00:00:00Z"),
+            Document("doc-1", "privacy", "Privacy", "https://example.com/us/privacy", "text", "d" * 64, "2026-09-08T00:00:00Z"),
+            Document("doc-2", "terms", "Terms", "https://example.com/hu/legal/terms", "text", "e" * 64, "2026-09-08T00:00:00Z"),
         ]
-        self.assertEqual(Evaluator()._document_contexts(documents), ["en-us", "hu-hu"])
+        self.assertEqual(Evaluator()._document_contexts(documents), ["hu", "us"])
 
     def test_terms_criterion_cannot_be_scored_from_privacy_document(self):
         evaluator = Evaluator()
