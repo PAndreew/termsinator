@@ -13,6 +13,13 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 
+KNOWN_POLICY_URLS = {
+    "amazon.com": (
+        ("https://www.amazon.com/gp/help/customer/display.html?nodeId=GLSBYFE9MGKKQXXM", "Conditions of Use"),
+        ("https://www.amazon.com/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ", "Privacy Notice"),
+    ),
+}
+
 LEGAL_TERMS = {
     "privacy": ("privacy", "datenschutz", "confidentialite", "privacidad", "privacidade"),
     "terms": ("terms", "conditions", "tos", "bedingungen", "condiciones", "legal terms"),
@@ -139,7 +146,7 @@ class Discoverer:
 
         candidates: dict[str, tuple[int, str, str]] = {}
         for href, anchor in parser.links:
-            self._add_candidate(candidates, final, href, anchor)
+            self._add_candidate(candidates, final, href, anchor, priority=20)
         for path, label in (("/privacy", "Privacy Policy"), ("/privacy-policy", "Privacy Policy"),
                             ("/legal/privacy", "Privacy Policy"), ("/terms", "Terms of Service"),
                             ("/terms-of-service", "Terms of Service"), ("/legal/terms", "Terms of Service"),
@@ -148,9 +155,14 @@ class Discoverer:
                             ("/us/legal/privacy-policy/", "Privacy Policy"),
                             ("/us/legal/end-user-agreement/", "Terms of Service"),
                             ("/cookie-policy", "Cookie Policy"), ("/legal/cookies-policy/", "Cookie Policy")):
-            self._add_candidate(candidates, final, path, label)
+            self._add_candidate(candidates, final, path, label, priority=10)
             if urllib.parse.urlsplit(root).hostname != urllib.parse.urlsplit(final).hostname:
-                self._add_candidate(candidates, root, path, label)
+                self._add_candidate(candidates, root, path, label, priority=10)
+
+        known_policies = KNOWN_POLICY_URLS.get(self._site_key(result.hostname), ())
+        for known_url, label in known_policies:
+            self._add_candidate(candidates, final, known_url, label, priority=30)
+        preferred_urls = {known_url for known_url, _ in known_policies}
 
         for sitemap_url in self._sitemap_urls(final, disallowed):
             try:
@@ -200,7 +212,7 @@ class Discoverer:
             if page_host == result.hostname.removeprefix("www."):
                 before = set(candidates)
                 for href, anchor in parsed.links:
-                    self._add_candidate(candidates, page_final, href, anchor)
+                    self._add_candidate(candidates, page_final, href, anchor, priority=-5)
                 additions = [(candidate_url, candidates[candidate_url]) for candidate_url in set(candidates) - before
                              if candidate_url not in queued]
                 additions.sort(key=lambda item: (-item[1][0], item[0]))
@@ -228,6 +240,8 @@ class Discoverer:
                 media_type=page_type.split(";", 1)[0],
                 relationship=("same_registrable_domain" if self._site_key(urllib.parse.urlsplit(page_final).hostname or "") == self._site_key(result.hostname) else "directly_linked_external_policy"),
             ))
+            if preferred_urls and preferred_urls.issubset({document.url for document in result.documents}):
+                break
         result.candidate_urls = list(dict.fromkeys([url for url, _ in ranked] + list(candidates)))[:50]
         return result
 
@@ -283,16 +297,23 @@ class Discoverer:
         parser.feed(body.decode("utf-8", errors="replace"))
         return parser
 
-    def _add_candidate(self, candidates, base, href, anchor):
+    def _add_candidate(self, candidates, base, href, anchor, priority=0):
         try:
             url = urllib.parse.urljoin(base, href)
             parsed = urllib.parse.urlsplit(url)
             base_host = urllib.parse.urlsplit(base).hostname or ""
             if parsed.scheme not in {"http", "https"} or not parsed.hostname:
                 return
-            clean = urllib.parse.urlunsplit((parsed.scheme, parsed.netloc.lower(), parsed.path, "", ""))
+            semantic_query = urllib.parse.urlencode([
+                (key, value) for key, value in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+                if key.lower() in {"nodeid", "documentid", "policyid", "locale", "language"}
+            ])
+            clean = urllib.parse.urlunsplit((parsed.scheme, parsed.netloc.lower(), parsed.path, semantic_query, ""))
             haystack = (parsed.path + " " + parsed.query + " " + anchor).lower().replace("-", "_")
             score, kind = self._legal_score(haystack)
+            if score <= 0:
+                return
+            score += priority
             if score <= 0:
                 return
             same_host = parsed.hostname.lower().removeprefix("www.") == base_host.lower().removeprefix("www.")

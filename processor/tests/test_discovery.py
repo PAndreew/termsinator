@@ -56,6 +56,18 @@ class DiscoveryTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.server.shutdown()
 
+    def test_preserves_policy_identifier_but_removes_tracking_query(self):
+        discoverer = Discoverer(allow_private=True)
+        candidates = {}
+        discoverer._add_candidate(
+            candidates,
+            "https://www.amazon.com/",
+            "/gp/help/customer/display.html?nodeId=GLSBYFE9MGKKQXXM&ref_=footer_cou",
+            "Conditions of Use",
+        )
+        self.assertIn("https://www.amazon.com/gp/help/customer/display.html?nodeId=GLSBYFE9MGKKQXXM", candidates)
+        self.assertTrue(all("ref_=" not in url for url in candidates))
+
     def test_redirect_is_validated_before_private_target_is_requested(self):
         class RedirectGuardDiscoverer(Discoverer):
             def _validate_host(self, hostname, port):

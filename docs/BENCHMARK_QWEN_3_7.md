@@ -80,6 +80,15 @@ Five problematic sites were rerun while the safeguards were being finalized:
 
 These runs used 36,205–165,391 input tokens and 4,394–4,864 output tokens each. The five-site mean was about 86,000 input and 4,600 output tokens. At illustrative rates of $0.03/M input and $0.13/M output, that is about $3,180 per million universal evaluations before OpenRouter fees, retries, discovery, and escalation. With a 5.5% fee and 15% retry/oversize allowance, it is roughly $3,850 per million. Actual billing must be recorded rather than inferred from token counts.
 
+## Manual Amazon follow-up
+
+Amazon's primary policies are public but use opaque help-center query identifiers:
+
+- Conditions of Use: `https://www.amazon.com/gp/help/customer/display.html?nodeId=GLSBYFE9MGKKQXXM`
+- Privacy Notice: `https://www.amazon.com/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ`
+
+Discovery had incorrectly removed the meaningful `nodeId` while removing tracking query parameters. It then fetched a generic help page and concluded that terms were missing. The crawler now preserves allowlisted policy identifiers, prioritizes links from the submitted root, and has a narrow Amazon fallback for bot/locale-dependent footers. A rerun found exactly the primary Terms and Privacy Notice, reached 91.1% coverage, and produced a raw score of 58.0 capped to 49.9 (`high_concern`). The cap came from directly cited perpetual, irrevocable, fully sublicensable user-content rights. The terms also directly disclose mandatory arbitration and a class-action waiver. This remains a single-model result, but the earlier Amazon `insufficient_evidence` result was a discovery defect and has been replaced.
+
 ## Decision
 
 Do not enable production workers or publish these ten ratings yet. The processing path is operational, but the results are suitable only as a benchmark.
