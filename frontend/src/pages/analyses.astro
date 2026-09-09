@@ -14,15 +14,11 @@ import Base from '../layouts/Base.astro';
     </select>
   </form>
 
+  <p class="muted">Open a snapshot to read its complete criterion-by-criterion analysis and citations.</p>
   <div id="analyses" aria-live="polite">Loading…</div>
 
-  <script>
-    interface Analysis {
-      hostname: string;
-      classification?: { offering_type?: string; sector?: string; subcategory?: string };
-      aggregate?: { score?: number; verdict?: string; model_count?: number };
-      policy_revision?: { source_date?: string };
-    }
+  <script is:inline type="module">
+    import { renderAnalyses } from '/analysis-snapshots.js';
 
     const target = document.querySelector('#analyses');
     const offering = document.querySelector('#offering');
@@ -30,70 +26,40 @@ import Base from '../layouts/Base.astro';
     const sort = document.querySelector('#sort');
 
     fetch('/api/v1/categories').then(response => response.json()).then(data => {
-      if (offering instanceof HTMLSelectElement) {
-        offering.insertAdjacentHTML('beforeend', data.offering_types.map((item: {id: string; label: string}) => `<option value="${item.id}">${escapeHTML(item.label)}</option>`).join(''));
+      if (offering) {
+        for (const item of data.offering_types || []) offering.add(new Option(item.label, item.id));
       }
-      if (sector instanceof HTMLSelectElement) {
-        sector.insertAdjacentHTML('beforeend', data.sectors.map((item: {id: string; label: string}) => `<option value="${item.id}">${escapeHTML(item.label)}</option>`).join(''));
+      if (sector) {
+        for (const item of data.sectors || []) sector.add(new Option(item.label, item.id));
       }
-    });
+    }).catch(() => {});
 
     for (const control of [offering, sector, sort]) control?.addEventListener('change', load);
     load();
 
     async function load() {
-      if (!(target instanceof HTMLElement)) return;
+      if (!target) return;
       target.textContent = 'Loading…';
       const params = new URLSearchParams();
-      if (offering instanceof HTMLSelectElement && offering.value) params.set('offering_type', offering.value);
-      if (sector instanceof HTMLSelectElement && sector.value) params.set('sector', sector.value);
+      if (offering?.value) params.set('offering_type', offering.value);
+      if (sector?.value) params.set('sector', sector.value);
       const endpoint = params.size ? `/api/v1/rankings?${params}` : '/api/v1/analyses';
       try {
         const response = await fetch(endpoint);
-        if (!response.ok) throw new Error('Could not load analyses');
+        if (!response.ok) throw new Error('Could not load analyses.');
         const data = await response.json();
-        const results = [...data.results] as Analysis[];
-        if (sort instanceof HTMLSelectElement && sort.value === 'date') {
+        const results = [...(data.results || [])];
+        if (sort?.value === 'date') {
           results.sort((a, b) => Date.parse(b.policy_revision?.source_date || '') - Date.parse(a.policy_revision?.source_date || ''));
-        } else if (sort instanceof HTMLSelectElement && sort.value === 'name') {
-          results.sort((a, b) => a.hostname.localeCompare(b.hostname));
+        } else if (sort?.value === 'name') {
+          results.sort((a, b) => String(a.hostname).localeCompare(String(b.hostname)));
         } else {
           results.sort((a, b) => (b.aggregate?.score ?? -1) - (a.aggregate?.score ?? -1));
         }
-        render(results);
+        renderAnalyses(target, results);
       } catch (error) {
-        target.textContent = error instanceof Error ? error.message : 'Could not load analyses';
+        target.textContent = error instanceof Error ? error.message : 'Could not load analyses.';
       }
-    }
-
-    function render(results: Analysis[]) {
-      if (!(target instanceof HTMLElement)) return;
-      if (!results.length) {
-        target.innerHTML = '<p>No completed analyses yet.</p>';
-        return;
-      }
-      target.innerHTML = results.map(item => {
-        const classification = item.classification || {};
-        const aggregate = item.aggregate || {};
-        const sourceDate = item.policy_revision?.source_date ? new Date(item.policy_revision.source_date).toLocaleDateString() : 'Unknown date';
-        return `<article class="analysis">
-          <h2>${escapeHTML(item.hostname)}</h2>
-          <div class="meta">
-            <span class="score">${aggregate.score ?? '—'}/100</span>
-            <span>${escapeHTML(String(aggregate.verdict || 'insufficient evidence').replaceAll('_', ' '))}</span>
-            <span>${aggregate.model_count || 0} model(s)</span>
-            <span>${escapeHTML(classification.offering_type || 'unclassified')}</span>
-            <span>${escapeHTML(classification.subcategory || '')}</span>
-            <span>${escapeHTML(sourceDate)}</span>
-          </div>
-        </article>`;
-      }).join('');
-    }
-
-    function escapeHTML(value: unknown) {
-      const span = document.createElement('span');
-      span.textContent = String(value);
-      return span.innerHTML;
     }
   </script>
 </Base>

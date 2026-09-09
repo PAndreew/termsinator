@@ -9,7 +9,12 @@ import Base from '../layouts/Base.astro';
     <button type="submit">Submit</button>
   </form>
   <div id="status" class="status" role="status" aria-live="polite"></div>
-  <p><a href="/analyses">View analysed policies</a></p>
+
+  <section class="analysed-policies" aria-labelledby="analysed-heading">
+    <h2 id="analysed-heading">Analysed policies</h2>
+    <p class="muted">Open a snapshot to read its complete criterion-by-criterion analysis and citations.</p>
+    <div id="homepage-analyses" aria-live="polite">Loading…</div>
+  </section>
 
   <script>
     const form = document.querySelector('#analyse');
@@ -51,6 +56,20 @@ import Base from '../layouts/Base.astro';
       if (request.status === 'failed') return;
       clearTimeout(timer);
       timer = setTimeout(() => poll(id).catch(error => { status.textContent = error.message; }), 3000);
+    }
+  </script>
+
+  <script is:inline type="module">
+    import { renderAnalyses } from '/analysis-snapshots.js';
+    const target = document.querySelector('#homepage-analyses');
+    if (target) {
+      fetch('/api/v1/analyses')
+        .then(response => {
+          if (!response.ok) throw new Error('Could not load analysed policies.');
+          return response.json();
+        })
+        .then(data => renderAnalyses(target, data.results || []))
+        .catch(error => { target.textContent = error.message || 'Could not load analysed policies.'; });
     }
   </script>
 </Base>

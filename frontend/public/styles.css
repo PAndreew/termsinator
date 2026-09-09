@@ -26,9 +26,25 @@ button:disabled { opacity: .6; cursor: default; }
 .status { margin: 20px 0; padding: 12px 0; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; }
 .status:empty { display: none; }
 .muted, footer { color: #666; font-size: 14px; }
-.analysis { padding: 18px 0; border-top: 1px solid #ddd; }
+.analysed-policies { margin-top: 42px; }
+.analysis { padding: 0; border-top: 1px solid #ddd; }
 .analysis:last-child { border-bottom: 1px solid #ddd; }
 .analysis h2 { margin: 0 0 4px; font-size: 18px; }
+.analysis-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 18px 4px; cursor: pointer; }
+.analysis-summary strong { margin-right: auto; font-size: 18px; }
+.analysis-summary span { color: #666; font-size: 14px; }
+.analysis-summary .score { color: #111; font-weight: 700; }
+.analysis-report { padding: 4px 4px 28px 24px; border-top: 1px solid #eee; }
+.analysis-report h3 { margin: 24px 0 8px; }
+.analysis-report table { font-size: 14px; }
+.report-overview { padding-top: 2px; }
+.criteria { border-bottom: 1px solid #ddd; }
+.criterion { border-top: 1px solid #ddd; padding: 0; }
+.criterion summary { padding: 10px 2px; cursor: pointer; }
+.criterion p { margin: 8px 0; }
+blockquote { margin: 12px 0; padding: 10px 14px; border-left: 2px solid #aaa; color: #333; font-size: 14px; }
+blockquote cite { display: block; margin-top: 6px; font-style: normal; }
+.report-list > li { margin-bottom: 14px; }
 .meta { display: flex; flex-wrap: wrap; gap: 12px; color: #666; font-size: 14px; }
 .score { color: #111; font-weight: 700; }
 table { width: 100%; border-collapse: collapse; }
@@ -38,4 +54,6 @@ footer { border-top: 1px solid #ddd; padding: 18px 0 40px; }
 @media (max-width: 560px) {
   form { display: block; }
   form button { width: 100%; margin-top: 8px; }
+  .analysis-summary strong { width: 100%; }
+  .analysis-report { padding-left: 4px; overflow-x: auto; }
 }

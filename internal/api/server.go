@@ -75,34 +75,38 @@ func (s *Server) siteRoutes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	path := strings.TrimPrefix(r.URL.Path, "/v1/sites/")
-	if !strings.HasSuffix(path, "/summary") {
+	kind := ""
+	for _, candidate := range []string{"summary", "report"} {
+		if strings.HasSuffix(path, "/"+candidate) {
+			kind = candidate
+			path = strings.TrimSuffix(path, "/"+candidate)
+			break
+		}
+	}
+	hostname := strings.ToLower(path)
+	if kind == "" || hostname == "" || strings.Contains(hostname, "/") {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not_found"})
 		return
 	}
-	hostname := strings.ToLower(strings.TrimSuffix(path, "/summary"))
-	if hostname == "" || strings.Contains(hostname, "/") {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not_found"})
-		return
-	}
-	var summary []byte
+	var document []byte
 	err := s.db.QueryRowContext(r.Context(), `
-SELECT po.payload->'summary'
+SELECT po.payload->$2
 FROM processing_outputs po
 JOIN analysis_requests ar ON ar.id=po.analysis_request_id
-WHERE ar.hostname=$1 AND ar.status='complete' AND po.payload ? 'summary'
-ORDER BY po.created_at DESC LIMIT 1`, hostname).Scan(&summary)
+WHERE ar.hostname=$1 AND ar.status='complete' AND po.payload ? $2
+ORDER BY po.created_at DESC LIMIT 1`, hostname, kind).Scan(&document)
 	if errors.Is(err, sql.ErrNoRows) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "report_not_found"})
 		return
 	}
-	if err != nil || !json.Valid(summary) {
+	if err != nil || !json.Valid(document) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "request_failed"})
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=300")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(summary)
+	_, _ = w.Write(document)
 }
 
 func (s *Server) analyses(w http.ResponseWriter, r *http.Request) {

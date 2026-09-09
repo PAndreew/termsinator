@@ -49,7 +49,7 @@ Public interface:
 - `POST /v1/analysis-requests` — submit one public HTTP(S) URL; returns an existing fresh report, existing queued job, or a new opaque request ID.
 - `GET /v1/analysis-requests/{id}` — queued/running/complete/failed status without exposing worker internals.
 - `GET /v1/sites/{host}/summary` — small extension payload.
-- `GET /v1/sites/{host}/reports/{id}` — aggregate report, model comparison, classifications, and individual evaluations.
+- `GET /v1/sites/{host}/report` — latest full report with category scores, criterion assessments, citations, flags, actions, and model metadata.
 - `GET /v1/categories` — versioned category tree, facets, counts, and valid ranking filters.
 - `GET /v1/rankings?category=...&subcategory=...` — comparable current reports ranked by score with freshness/coverage constraints.
 - `GET /v1/matrices/{version}` and `/schema` — machine-readable methodology contracts.

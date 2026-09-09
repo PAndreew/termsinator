@@ -94,6 +94,45 @@ func TestCompletedProcessingPublishesHostnameSummary(t *testing.T) {
 	}
 }
 
+func TestCompletedProcessingPublishesFullHostnameReport(t *testing.T) {
+	db := testDB(t)
+	if err := store.Migrate(context.Background(), db); err != nil {
+		t.Fatal(err)
+	}
+	requestID := "30000000-0000-4000-8000-000000000002"
+	jobID := "40000000-0000-4000-8000-000000000002"
+	_, _ = db.Exec(`DELETE FROM analysis_requests WHERE id=$1`, requestID)
+	if _, err := db.Exec(`INSERT INTO analysis_requests(id,submitted_url,normalized_url,hostname,status) VALUES($1,'https://report.example/','https://report.example/','report.example','complete')`, requestID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO jobs(id,analysis_request_id,status) VALUES($1,$2,'complete')`, jobID, requestID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO processing_outputs(job_id,analysis_request_id,payload) VALUES($1,$2,$3)`, jobID, requestID, `{"summary":{"hostname":"report.example"},"report":{"schema_version":"1.0.0","marker":"full"}}`); err != nil {
+		t.Fatal(err)
+	}
+
+	server := httptest.NewServer(api.NewServer(db))
+	defer server.Close()
+	response, err := http.Get(server.URL + "/v1/sites/report.example/report")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("report status=%d, want 200", response.StatusCode)
+	}
+	var result struct {
+		Marker string `json:"marker"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
+		t.Fatal(err)
+	}
+	if result.Marker != "full" {
+		t.Fatalf("report marker=%q", result.Marker)
+	}
+}
+
 func TestRankingsFilterComparableOfferingTypes(t *testing.T) {
 	db := testDB(t)
 	if err := store.Migrate(context.Background(), db); err != nil {
