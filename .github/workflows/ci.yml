@@ -15,7 +15,7 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_PASSWORD: test
+          POSTGRES_PASSWORD: ${{ github.run_id }}
           POSTGRES_DB: termsinator_test
         ports: ["5432:5432"]
         options: >-
@@ -24,7 +24,7 @@ jobs:
           --health-timeout 3s
           --health-retries 10
     env:
-      TEST_DATABASE_URL: postgres://postgres:test@127.0.0.1:5432/termsinator_test?sslmode=disable
+      TEST_DATABASE_URL: postgres://postgres:${{ github.run_id }}@127.0.0.1:5432/termsinator_test?sslmode=disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -58,5 +58,5 @@ jobs:
         run: for file in schemas/*.json extension/manifest.json; do python3 -m json.tool "$file" >/dev/null; done
       - name: Validate Compose
         env:
-          POSTGRES_PASSWORD: ci-only
+          POSTGRES_PASSWORD: ${{ github.run_id }}
         run: docker compose -f compose.production.yml config --quiet
