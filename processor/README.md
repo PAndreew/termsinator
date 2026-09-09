@@ -4,7 +4,7 @@ The worker combines deterministic legal-page discovery with a bounded smolagents
 
 ## Pipeline
 
-1. Validate the public URL and resolved addresses.
+1. Validate the public URL and resolved addresses before every request and redirect hop.
 2. Inspect the root, robots file, sitemap, footer links, and conservative known legal paths.
 3. Fetch at most eight candidate documents within byte/time limits.
 4. Split normalized text into immutable evidence passages.

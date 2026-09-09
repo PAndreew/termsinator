@@ -95,6 +95,16 @@ class PageParser(HTMLParser):
             self._anchor.append(clean)
 
 
+class ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def __init__(self, validator):
+        super().__init__()
+        self.validator = validator
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        self.validator(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 class Discoverer:
     def __init__(self, *, max_documents=8, max_total_bytes=8_000_000, timeout=12,
                  allow_private=False, allowed_ports={80, 443}):
@@ -243,11 +253,11 @@ class Discoverer:
                 raise ValueError("non-public destination")
 
     def _fetch(self, url, accept="text/html,application/xhtml+xml"):
-        parsed = urllib.parse.urlsplit(url)
-        self._validate_host(parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80))
+        self._validate_destination(url)
         request = urllib.request.Request(url, headers={"User-Agent": self.user_agent, "Accept": accept,
                                                        "Accept-Language": "en-US,en;q=0.9"})
-        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+        opener = urllib.request.build_opener(ValidatingRedirectHandler(self._validate_destination))
+        with opener.open(request, timeout=self.timeout) as response:
             final = response.geturl()
             final_parsed = urllib.parse.urlsplit(final)
             self._validate_host(final_parsed.hostname, final_parsed.port or (443 if final_parsed.scheme == "https" else 80))
@@ -261,6 +271,12 @@ class Discoverer:
             if len(body) > self.max_total_bytes:
                 raise ValueError("response too large")
             return body, final, response.headers.get_content_type()
+
+    def _validate_destination(self, url):
+        parsed = urllib.parse.urlsplit(url)
+        if parsed.scheme not in {"http", "https"} or parsed.username or parsed.password or not parsed.hostname:
+            raise ValueError("invalid redirect destination")
+        self._validate_host(parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80))
 
     def _parse_html(self, body):
         parser = PageParser()

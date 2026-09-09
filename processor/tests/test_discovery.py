@@ -6,6 +6,7 @@ from termsinator_processor.discovery import Discoverer
 
 
 class Site(BaseHTTPRequestHandler):
+    private_target_hit = False
     pages = {
         "/": """<html><body><main>Product</main><footer>
         <a href='/privacy'>Privacy Policy</a><a href='/privacy-alias'>Privacy Notice</a>
@@ -16,6 +17,17 @@ class Site(BaseHTTPRequestHandler):
     }
 
     def do_GET(self):
+        if self.path == "/redirect-private":
+            self.send_response(302)
+            self.send_header("Location", f"http://127.0.0.1:{self.server.server_port}/private-target")
+            self.end_headers()
+            return
+        if self.path == "/private-target":
+            type(self).private_target_hit = True
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"private")
+            return
         if self.path == "/privacy-alias":
             self.send_response(302)
             self.send_header("Location", "/privacy")
@@ -43,6 +55,18 @@ class DiscoveryTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.server.shutdown()
+
+    def test_redirect_is_validated_before_private_target_is_requested(self):
+        class RedirectGuardDiscoverer(Discoverer):
+            def _validate_host(self, hostname, port):
+                if hostname == "127.0.0.1":
+                    raise ValueError("non-public destination")
+
+        Site.private_target_hit = False
+        discoverer = RedirectGuardDiscoverer(allowed_ports={self.server.server_port})
+        with self.assertRaises(ValueError):
+            discoverer._fetch(f"http://localhost:{self.server.server_port}/redirect-private")
+        self.assertFalse(Site.private_target_hit)
 
     def test_finds_legal_pages_without_crawling_unrelated_tree(self):
         root = f"http://127.0.0.1:{self.server.server_port}/"
