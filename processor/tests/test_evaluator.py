@@ -41,6 +41,24 @@ class EvaluatorTest(unittest.TestCase):
             errors = list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(value))
             self.assertEqual(errors, [], "\n".join(error.message for error in errors))
 
+    def test_detects_mixed_regional_policy_contexts(self):
+        documents = [
+            Document("doc-1", "privacy", "Privacy", "https://example.com/en-us/privacy", "text", "d" * 64, "2026-09-08T00:00:00Z"),
+            Document("doc-2", "terms", "Terms", "https://example.com/hu-hu/terms", "text", "e" * 64, "2026-09-08T00:00:00Z"),
+        ]
+        self.assertEqual(Evaluator()._document_contexts(documents), ["en-us", "hu-hu"])
+
+    def test_terms_criterion_cannot_be_scored_from_privacy_document(self):
+        evaluator = Evaluator()
+        document = Document("doc-1", "privacy", "Privacy", "https://example.com/privacy", "We may terminate accounts without notice.", "c" * 64, "2026-09-08T00:00:00Z")
+        item = {"criterion_id": "CTA-2", "score": 0, "evidence_status": "supported", "confidence": "high",
+                "summary": "Termination without notice", "reasoning": "Termination without notice",
+                "citations": [{"document_id": "doc-1", "quote": document.text}]}
+        assessment = evaluator._assessment("CTA-2", item, {"doc-1": document})
+        self.assertIsNone(assessment["score"])
+        self.assertEqual(assessment["evidence_status"], "not_found")
+        self.assertEqual(assessment["citations"], [])
+
     def test_critical_flag_requires_clause_that_supports_the_trigger(self):
         evaluator = Evaluator()
         document = Document("doc-1", "terms", "Terms", "https://example.com/terms", "You must not use content to train any machine learning model.", "b" * 64, "2026-09-08T00:00:00Z")

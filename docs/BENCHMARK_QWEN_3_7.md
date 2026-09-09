@@ -56,7 +56,17 @@ Before a conservative lexical gate was added, Qwen raised eight critical flags a
 
 ### Document selection can over-collect
 
-The eight-document cap selected historical or product-specific documents for broad roots. Current/effective version, service scope, locale, and required document classes need deterministic selection before evaluation.
+The eight-document cap selected historical or product-specific documents for broad roots. Current/effective version and service scope still need deterministic selection before evaluation.
+
+## Safeguards added after this run
+
+- Redirect aliases and duplicate final policy URLs are collapsed.
+- Final URL/title/content determines document kind instead of the discovery link alone.
+- Privacy text can no longer support terms-only criteria, or vice versa; a missing required document class reduces coverage and blocks publication.
+- Mixed explicit regional URL contexts force `insufficient_evidence` rather than one combined score.
+- Critical verdict caps require conservative lexical support in the cited clause.
+
+These safeguards have unit coverage but the full ten-site benchmark has not yet been rerun, so they are not evidence that the quality gate passes.
 
 ## Decision
 

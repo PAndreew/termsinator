@@ -159,6 +159,7 @@ class Discoverer:
         queued = {url for url, _ in queue}
         fetched: set[str] = set()
         seen_hashes: set[str] = set()
+        seen_final_urls: set[str] = set()
         root_parts = [part for part in urllib.parse.urlsplit(root).path.split("/") if part]
         desired_locale = root_parts[0].lower() if root_parts and re.fullmatch(r"[a-z]{2}(?:-[a-z]{2})?", root_parts[0].lower()) else None
         while queue:
@@ -201,12 +202,14 @@ class Discoverer:
             if (desired_locale and final_locale and desired_locale != final_locale) or len(text) < 100 or not self._looks_legal(page_final, " ".join(parsed.title), text):
                 continue
             digest = hashlib.sha256(text.encode()).hexdigest()
-            if digest in seen_hashes:
+            canonical_final = urllib.parse.urlunsplit((*urllib.parse.urlsplit(page_final)[:4], ""))
+            if digest in seen_hashes or canonical_final in seen_final_urls:
                 continue
             seen_hashes.add(digest)
+            seen_final_urls.add(canonical_final)
             result.documents.append(Document(
                 id=f"doc-{len(result.documents) + 1}",
-                kind=kind,
+                kind=self._infer_kind(page_final, " ".join(parsed.title), text, kind),
                 title=" ".join(parsed.title)[:300] or title_hint[:300] or kind.replace("_", " ").title(),
                 url=page_final,
                 text=text,
@@ -303,6 +306,16 @@ class Discoverer:
     def _site_key(self, hostname):
         parts = hostname.lower().rstrip(".").split(".")
         return ".".join(parts[-2:]) if len(parts) >= 2 else hostname
+
+    def _infer_kind(self, url, title, text, fallback):
+        score, kind = self._legal_score(urllib.parse.urlsplit(url).path.lower() + " " + title.lower())
+        if score > 0:
+            return kind
+        opening = text[:3000].lower()
+        phrases = (("privacy policy", "privacy"), ("privacy notice", "privacy"),
+                   ("terms of use", "terms"), ("terms of service", "terms"),
+                   ("terms and conditions", "terms"), ("cookie policy", "cookies"))
+        return next((kind for phrase, kind in phrases if phrase in opening), fallback)
 
     def _looks_legal(self, url, title, text):
         path = urllib.parse.urlsplit(url).path.lower()

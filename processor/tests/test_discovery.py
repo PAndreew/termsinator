@@ -8,14 +8,19 @@ from termsinator_processor.discovery import Discoverer
 class Site(BaseHTTPRequestHandler):
     pages = {
         "/": """<html><body><main>Product</main><footer>
-        <a href='/privacy'>Privacy Policy</a><a href='/terms'>Terms of Service</a>
-        <a href='/calendar?day=1'>Calendar</a></footer></body></html>""",
+        <a href='/privacy'>Privacy Policy</a><a href='/privacy-alias'>Privacy Notice</a>
+        <a href='/terms'>Terms of Service</a><a href='/calendar?day=1'>Calendar</a></footer></body></html>""",
         "/privacy": "<html><main><h1>Privacy</h1><p>We collect account data to provide the service. We describe retention, sharing, security, deletion, access, and user choices in this privacy policy.</p></main></html>",
         "/terms": "<html><main><h1>Terms</h1><p>These terms govern use of the service, account termination, payments, liability, disputes, content ownership, acceptable conduct, and changes to this agreement.</p></main></html>",
         "/robots.txt": "User-agent: *\nDisallow: /calendar\n",
     }
 
     def do_GET(self):
+        if self.path == "/privacy-alias":
+            self.send_response(302)
+            self.send_header("Location", "/privacy")
+            self.end_headers()
+            return
         body = self.pages.get(self.path)
         if body is None:
             self.send_response(404); self.end_headers(); return
@@ -44,7 +49,8 @@ class DiscoveryTest(unittest.TestCase):
         result = Discoverer(allow_private=True, allowed_ports={self.server.server_port}).discover(root)
         urls = {document.url for document in result.documents}
         self.assertEqual(urls, {root + "privacy", root + "terms"})
-        self.assertLessEqual(result.pages_visited, 4)
+        self.assertEqual({document.kind for document in result.documents}, {"privacy", "terms"})
+        self.assertLessEqual(result.pages_visited, 5)
         self.assertTrue(result.robots_respected)
 
 

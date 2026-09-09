@@ -5,6 +5,7 @@ import json
 import os
 import re
 import time
+import urllib.parse
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -155,13 +156,17 @@ NUMBERED EVIDENCE PASSAGES:
             actions = self._default_actions(assessments)
         score = self._score(assessments, flags)
         verdict = score.pop("verdict")
+        document_contexts = self._document_contexts(docs.values())
+        if len(document_contexts) > 1:
+            verdict = {"label": "insufficient_evidence", "explanation": "Discovered policies mix regional contexts."}
+            raw.setdefault("limitations", []).append("Mixed regional policy contexts: " + ", ".join(document_contexts))
         bundle_id = hashlib.sha256("\n".join(sorted(f"{d.kind}\0{d.url}\0{d.sha256}" for d in docs.values())).encode()).hexdigest()
         report = {
             "schema_version": "1.0.0", "matrix_version": "1.0.0",
             "scan": {"id": request_id, "started_at": now, "completed_at": now},
             "site": {"submitted_root_url": discovery.root_url, "final_root_url": discovery.final_root_url,
                      "hostname": discovery.hostname, "registrable_domain": discovery.hostname,
-                     "service_name": None, "assumed_jurisdictions": ["jurisdiction-neutral"]},
+                     "service_name": None, "assumed_jurisdictions": document_contexts or ["jurisdiction-neutral"]},
             "agent": {"harness": {"name": "smolagents-bounded", "version": "1.26.0"},
                       "model": {"provider": "openrouter", "name": self.model_id, "version": None}},
             "classification": classification,
@@ -213,13 +218,16 @@ NUMBERED EVIDENCE PASSAGES:
                     "reasoning": "The model did not return this criterion.", "citations": []}
         status = item.get("evidence_status", "not_found")
         score = item.get("score")
-        if not isinstance(score, int) or not 0 <= score <= 4:
+        allowed_kinds = self._allowed_document_kinds(criterion_id)
+        has_applicable_document = any(document.kind in allowed_kinds for document in docs.values())
+        if not isinstance(score, int) or not 0 <= score <= 4 or not has_applicable_document:
             score = None
             status = "inaccessible"
         citation_input = item.get("citations", [])
         if not citation_input and item.get("citation"):
             citation_input = [item["citation"]]
-        citations = self._citations(citation_input, docs)
+        citations = [citation for citation in self._citations(citation_input, docs)
+                     if docs[citation["document_id"]].kind in allowed_kinds]
         if citation_input and not citations:
             status, score = "not_found", None
         return {"criterion_id": criterion_id, "category_id": criterion_id.split("-")[0], "score": score,
@@ -227,6 +235,31 @@ NUMBERED EVIDENCE PASSAGES:
                 "confidence": item.get("confidence") if item.get("confidence") in {"low", "medium", "high"} else "low",
                 "summary": str(item.get("summary", criterion_id))[:240],
                 "reasoning": str(item.get("reasoning", "No reasoning supplied."))[:2000], "citations": citations}
+
+    def _document_contexts(self, documents):
+        contexts = set()
+        for document in documents:
+            parts = [part.lower() for part in urllib.parse.urlsplit(document.url).path.split("/") if part]
+            if not parts:
+                continue
+            first = parts[0]
+            if re.fullmatch(r"[a-z]{2}-[a-z]{2}", first) or first in {"us", "uk", "eu", "eea", "row"}:
+                contexts.add(first)
+            elif len(parts) > 1 and first in {"legal", "policies"} and parts[1] in {"us", "uk", "eu", "eea", "row"}:
+                contexts.add(parts[1])
+        return sorted(contexts)
+
+    def _allowed_document_kinds(self, criterion_id):
+        category = criterion_id.split("-", 1)[0]
+        if category in {"DCP", "SST", "RSR"}:
+            return {"privacy", "cookies", "ai_data_use"}
+        if category in {"PRL"}:
+            return {"terms", "subscription"}
+        if category in {"CTA", "DGT"}:
+            return {"terms"}
+        if category == "CIA":
+            return {"privacy", "ai_data_use", "terms"} if criterion_id == "CIA-3" else {"terms"}
+        return {"privacy", "cookies", "ai_data_use", "terms", "subscription", "acceptable_use"}
 
     def _citations(self, items, docs):
         valid = []
