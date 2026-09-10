@@ -58,7 +58,7 @@ import Base from '../layouts/Base.astro';
       if (!response.ok) throw new Error(request.error || 'Could not load analysis');
       status.textContent = `${request.normalized_url} — ${request.status}`;
       if (request.status === 'complete') {
-        status.innerHTML = `Analysis complete. <a href="/analyses">View analysed policies</a>`;
+        status.innerHTML = `Analysis complete. <a href="/analyses/">View analysed policies</a>`;
         return;
       }
       if (request.status === 'failed') return;

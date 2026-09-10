@@ -7,8 +7,18 @@ import Base from '../layouts/Base.astro';
   <h2>Sources</h2>
   <p>Termsinator locates public terms, privacy policies, cookie policies, acceptable-use rules, subscription terms, and AI or data-use policies. Retrieved text is normalized and hashed. Reports identify the document revision and provide short exact citations.</p>
 
-  <h2>Evaluation</h2>
-  <p>Each model evaluates the same document bundle using the same versioned matrix. The matrix covers data collection, sharing and tracking, retention and rights, content and AI use, account control, payments, disputes, and transparency.</p>
+  <h2>Evaluation areas</h2>
+  <p>Each model evaluates the same document bundle using the same versioned matrix. Reports use plain-language area names and place the lowest grades first:</p>
+  <ul>
+    <li><strong>Privacy and data collection</strong> — what is collected, why, and whether sensitive data is limited.</li>
+    <li><strong>Sharing, tracking and advertising</strong> — recipients, sales, cookies, and advertising controls.</li>
+    <li><strong>Retention, security and data rights</strong> — storage periods, protection, access, and deletion.</li>
+    <li><strong>Content ownership and AI use</strong> — licenses, user ownership, outputs, and model training.</li>
+    <li><strong>Account control and policy changes</strong> — suspension, leaving, exports, and changes to terms.</li>
+    <li><strong>Payments, refunds and liability</strong> — renewals, cancellation, warranties, and indemnity.</li>
+    <li><strong>Disputes and legal rights</strong> — arbitration, class waivers, governing law, and complaints.</li>
+    <li><strong>Clarity, accessibility and vulnerable users</strong> — readability, contacts, children, and accessibility.</li>
+  </ul>
 
   <h2>Grades</h2>
   <p>Public results use broad letter grades: A (strongest user protections), B, C, D, and E (highest concern). Criteria are evaluated on a zero-to-four rubric internally, then the server applies published weights and critical-risk caps before assigning the grade. A letter grade avoids implying that small numeric differences are precise or reproducible.</p>

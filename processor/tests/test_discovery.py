@@ -68,6 +68,13 @@ class DiscoveryTest(unittest.TestCase):
         self.assertIn("https://www.amazon.com/gp/help/customer/display.html?nodeId=GLSBYFE9MGKKQXXM", candidates)
         self.assertTrue(all("ref_=" not in url for url in candidates))
 
+    def test_request_budget_limits_hostile_candidate_sets(self):
+        discoverer = Discoverer(allow_private=True, allowed_ports={self.server.server_port}, max_requests=1)
+        root = f"http://127.0.0.1:{self.server.server_port}/"
+        discoverer._fetch(root)
+        with self.assertRaisesRegex(ValueError, "request budget"):
+            discoverer._fetch(root)
+
     def test_redirect_is_validated_before_private_target_is_requested(self):
         class RedirectGuardDiscoverer(Discoverer):
             def _validate_host(self, hostname, port):

@@ -126,15 +126,21 @@ class ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
 
 class Discoverer:
     def __init__(self, *, max_documents=8, max_total_bytes=8_000_000, timeout=12,
-                 allow_private=False, allowed_ports={80, 443}):
+                 max_requests=40, max_duration=120, allow_private=False, allowed_ports={80, 443}):
         self.max_documents = max_documents
         self.max_total_bytes = max_total_bytes
         self.timeout = timeout
+        self.max_requests = max_requests
+        self.max_duration = max_duration
+        self._request_count = 0
+        self._deadline = None
         self.allow_private = allow_private
         self.allowed_ports = set(allowed_ports)
         self.user_agent = "Mozilla/5.0 (compatible; Termsinator/0.1; +https://termsinator.46-62-240-211.sslip.io/methodology/)"
 
     def discover(self, raw_url: str) -> DiscoveryResult:
+        self._request_count = 0
+        self._deadline = time.monotonic() + self.max_duration
         root = self._normalize_root(raw_url)
         body, final, media_type = self._fetch(root)
         parser = self._parse_html(body)
@@ -197,6 +203,9 @@ class Discoverer:
         root_parts = [part for part in urllib.parse.urlsplit(root).path.split("/") if part]
         desired_locale = root_parts[0].lower() if root_parts and re.fullmatch(r"[a-z]{2}(?:-[a-z]{2})?", root_parts[0].lower()) else None
         while queue:
+            if self._request_count >= self.max_requests or time.monotonic() >= self._deadline:
+                result.truncated = True
+                break
             url, (_, kind, title_hint) = queue.pop(0)
             if url in fetched:
                 continue
@@ -279,11 +288,18 @@ class Discoverer:
                 raise ValueError("non-public destination")
 
     def _fetch(self, url, accept="text/html,application/xhtml+xml"):
+        if self._deadline is not None and time.monotonic() >= self._deadline:
+            raise TimeoutError("discovery deadline exceeded")
+        if self._request_count >= self.max_requests:
+            raise ValueError("discovery request budget exceeded")
+        self._request_count += 1
         self._validate_destination(url)
         request = urllib.request.Request(url, headers={"User-Agent": self.user_agent, "Accept": accept,
                                                        "Accept-Language": "en-US,en;q=0.9"})
         opener = urllib.request.build_opener(ValidatingRedirectHandler(self._validate_destination))
-        with opener.open(request, timeout=self.timeout) as response:
+        remaining = self.timeout if self._deadline is None else min(self.timeout, max(.1, self._deadline - time.monotonic()))
+        with opener.open(request, timeout=remaining) as response:
+            self._validate_connected_peer(response)
             final = response.geturl()
             final_parsed = urllib.parse.urlsplit(final)
             self._validate_host(final_parsed.hostname, final_parsed.port or (443 if final_parsed.scheme == "https" else 80))
@@ -297,6 +313,16 @@ class Discoverer:
             if len(body) > self.max_total_bytes:
                 raise ValueError("response too large")
             return body, final, response.headers.get_content_type()
+
+    def _validate_connected_peer(self, response):
+        if self.allow_private:
+            return
+        try:
+            peer = response.fp.raw._sock.getpeername()[0]
+            if not ipaddress.ip_address(peer).is_global:
+                raise ValueError("connection reached non-public destination")
+        except AttributeError as error:
+            raise ValueError("could not validate connected peer") from error
 
     def _validate_destination(self, url):
         parsed = urllib.parse.urlsplit(url)

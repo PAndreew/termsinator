@@ -336,7 +336,8 @@ func (s *Server) analysisRequestStatus(w http.ResponseWriter, r *http.Request) {
 
 func clientIP(r *http.Request) string {
 	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-		return strings.TrimSpace(strings.Split(forwarded, ",")[0])
+		chain := strings.Split(forwarded, ",")
+		return strings.TrimSpace(chain[len(chain)-1])
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err == nil {

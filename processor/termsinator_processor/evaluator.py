@@ -209,7 +209,7 @@ NUMBERED EVIDENCE PASSAGES:
                              "score": public_score, "grade": public_grade, "verdict": verdict["label"], "coverage": score["coverage"],
                              "evaluated_at": now}],
             "top_risks": top_risks, "top_actions": top_actions,
-            "full_report_url": f"https://termsinator.46-62-240-211.sslip.io/analyses#{discovery.hostname}",
+            "full_report_url": f"https://termsinator.46-62-240-211.sslip.io/analyses/#{discovery.hostname}",
             "generated_at": now,
         }
         return {"summary": summary, "report": report}

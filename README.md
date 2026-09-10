@@ -47,6 +47,7 @@ Run the API with `DATABASE_URL` and `LISTEN_ADDR=:8080`. Run the worker with `DA
 - [Gaps and red–green TDD plan](docs/GAPS_AND_PLAN.md)
 - [Qwen 3.7 ten-site benchmark](docs/BENCHMARK_QWEN_3_7.md)
 - [Discovery and consistency benchmark](docs/CONSISTENCY_BENCHMARK.md)
+- [Security model and residual risks](docs/SECURITY.md)
 - [Agent report JSON Schema](schemas/report-v1.schema.json)
 - [Public multi-model summary JSON Schema](schemas/public-summary-v1.schema.json)
 

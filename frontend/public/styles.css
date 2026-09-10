@@ -34,16 +34,26 @@ button:disabled { opacity: .6; cursor: default; }
 .analysis:last-child { border-bottom: 1px solid #ddd; }
 .analysis h2 { margin: 0 0 4px; font-size: 18px; }
 .analysis-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 18px 4px; cursor: pointer; }
-.analysis-summary strong { margin-right: auto; font-size: 18px; }
+.analysis-summary > strong { margin-right: auto; font-size: 18px; }
 .analysis-summary span { color: #666; font-size: 14px; }
 .analysis-summary .score { color: #111; font-weight: 700; }
+.analysis-summary .snapshot-risk { width: 100%; color: #333; }
+.analysis-summary .snapshot-risk strong { font-size: inherit; }
 .analysis-report { padding: 4px 4px 28px 24px; border-top: 1px solid #eee; }
 .analysis-report h3 { margin: 24px 0 8px; }
 .analysis-report table { font-size: 14px; }
 .report-overview { padding-top: 2px; }
-.criteria { border-bottom: 1px solid #ddd; }
+.category-list { border-bottom: 1px solid #ccc; }
+.category { border-top: 1px solid #ccc; }
+.category > summary { display: flex; align-items: center; gap: 12px; padding: 13px 2px; cursor: pointer; }
+.category > summary > span:last-child { display: grid; }
+.category > summary small { color: #666; font-weight: 400; }
+.category > p { margin: 4px 0 14px 44px; color: #444; }
+.criteria { margin-left: 44px; border-bottom: 1px solid #ddd; }
 .criterion { border-top: 1px solid #ddd; padding: 0; }
-.criterion summary { padding: 10px 2px; cursor: pointer; }
+.criterion summary { display: flex; align-items: center; gap: 9px; padding: 10px 2px; cursor: pointer; }
+.criterion summary strong { flex: 1; }
+.criterion-code { color: #777; font-size: 12px; }
 .criterion p { margin: 8px 0; }
 blockquote { margin: 12px 0; padding: 10px 14px; border-left: 2px solid #aaa; color: #333; font-size: 14px; }
 blockquote cite { display: block; margin-top: 6px; font-style: normal; }
@@ -68,6 +78,8 @@ footer { border-top: 1px solid #ddd; padding: 18px 0 40px; }
   .submit-form input { width: 100%; }
   .ranking-filters label { display: block; margin-bottom: 6px; }
   .ranking-filters select { width: 100%; }
-  .analysis-summary strong { width: 100%; }
+  .analysis-summary > strong { width: 100%; }
   .analysis-report { padding-left: 4px; overflow-x: auto; }
+  .category > p, .criteria { margin-left: 0; }
+  .criterion summary { align-items: flex-start; }
 }
