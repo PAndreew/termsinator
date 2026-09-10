@@ -10,6 +10,7 @@ SSH=(ssh -i "$SSH_KEY" -o BatchMode=yes "$SERVER")
 current=$(${SSH[@]} "cat '$REMOTE_DIR/.active-color' 2>/dev/null || echo green")
 if [[ "$current" == blue ]]; then next=green; else next=blue; fi
 tag=$(git -C "$(dirname "$0")/.." rev-parse --short=12 HEAD 2>/dev/null || date +%Y%m%d%H%M%S)
+"$(dirname "$0")/package-extension.sh" >/dev/null
 
 echo "[deploy] active=$current next=$next tag=$tag"
 ${SSH[@]} "install -d -m 700 '$REMOTE_DIR'"

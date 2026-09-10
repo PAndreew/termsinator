@@ -8,8 +8,8 @@ import Base from '../layouts/Base.astro';
   <h2>Information processed</h2>
   <p>When you request an analysis, Termsinator receives the submitted website URL and your network request. The submitted URL and resulting analysis are stored. Raw IP addresses are not stored in the application database. A keyed, daily rotating hash of the IP address is stored with the request to enforce abuse limits; it is not used as an account identifier.</p>
 
-  <h2>Browser extension</h2>
-  <p>In click-only mode, the extension sends the current hostname when you open it. In automatic mode, which you must enable, it sends each visited hostname. It does not send page paths, query strings, page titles, or page contents.</p>
+  <h2>Browser extension and bookmarklet</h2>
+  <p>In click-only mode, the extension sends the current hostname when you open it. In automatic mode, which you must enable, it sends each visited hostname and may display a small result overlay when a report exists. The bookmarklet sends the current hostname when clicked. Neither tool sends page paths, query strings, page titles, or page contents.</p>
 
   <h2>Policy documents</h2>
   <p>Workers may retrieve public terms, privacy policies, and related pages from submitted websites. Full extracted documents are retained for verification but are not published. Public reports contain short citations and links to their sources.</p>

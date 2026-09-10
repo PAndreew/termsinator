@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="11.39931mm"
+   height="8.4718399mm"
+   viewBox="0 0 11.39931 8.4718399"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   sodipodi:docname="rippd.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="true"
+     inkscape:zoom="7.4079554"
+     inkscape:cx="60.070556"
+     inkscape:cy="24.770668"
+     inkscape:window-width="1920"
+     inkscape:window-height="974"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       id="grid1"
+       units="mm"
+       originx="-116.8833"
+       originy="-149.96706"
+       spacingx="0.99999998"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Réteg 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-116.8833,-149.96707)">
+    <path
+       id="path50"
+       style="fill:#66ff00;fill-opacity:1;stroke-width:0.136633"
+       d="m 118.15299,149.96707 -1.26969,8.47184 h 6.47248 l -2.69803,-2.69803 2.89698,-2.88458 h 0.0129 l 0.0253,-0.0253 -2.87631,-2.86391 z m 4.48449,0 2.87631,2.86391 -2.73214,2.73213 h -0.0243 l -0.1788,0.17777 2.69803,2.69803 h 1.60921 l 1.39681,-8.47184 z" />
+  </g>
+</svg>

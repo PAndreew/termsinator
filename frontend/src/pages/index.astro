@@ -28,6 +28,9 @@ import Base from '../layouts/Base.astro';
     const form = document.querySelector('#analyse');
     const status = document.querySelector('#status');
     let timer: number | undefined;
+    const requestedURL = new URLSearchParams(window.location.search).get('url');
+    const initialInput = document.querySelector('#url');
+    if (requestedURL && initialInput instanceof HTMLInputElement) initialInput.value = requestedURL;
 
     form?.addEventListener('submit', async (event) => {
       event.preventDefault();

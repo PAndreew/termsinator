@@ -28,7 +28,7 @@ if (!hostname) {
   try {
     const summary = await fetchSummary(hostname);
     if (!summary) {
-      result.innerHTML = `<strong>No report yet for ${escapeHTML(hostname)}</strong><p><a target="_blank" href="https://termsinator.46-62-240-211.sslip.io/?url=${encodeURIComponent(tab.url)}">Request analysis →</a></p>`;
+      result.innerHTML = `<strong>No report yet for ${escapeHTML(hostname)}</strong><p><a target="_blank" href="https://termsinator.46-62-240-211.sslip.io/?url=${encodeURIComponent(`https://${hostname}`)}">Request analysis →</a></p>`;
     } else {
       const risks = (summary.top_risks || []).map(r => `<div class="risk">${escapeHTML(r.title)}</div>`).join('');
       const grade = letterGrade(summary.aggregate.score, summary.aggregate.grade, summary.aggregate.verdict);

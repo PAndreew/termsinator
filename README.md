@@ -19,7 +19,7 @@ Termsinator is a risk-screening tool, not legal advice.
 - Manifest V3 extension with click-only/automatic switch
 - Hardened TLS edge and blue/green API/web/worker layout
 
-The production processing profile remains disabled while the Qwen benchmark findings are addressed. Submitted URLs remain queued meanwhile; see [`processor/README.md`](processor/README.md) and the [ten-site benchmark](docs/BENCHMARK_QWEN_3_7.md).
+The production processing profile remains disabled while the Qwen benchmark findings are addressed. Submitted URLs remain queued for maintainer review. A maintainer can run the processor locally and publish a schema-validated result with `scripts/publish-report.sh RESULT.json`; see [`processor/README.md`](processor/README.md) and the [ten-site benchmark](docs/BENCHMARK_QWEN_3_7.md).
 
 ## Development
 
@@ -37,6 +37,13 @@ pnpm --dir frontend build
 ```
 
 Run the API with `DATABASE_URL` and `LISTEN_ADDR=:8080`. Run the worker with `DATABASE_URL`, `PROCESSOR_EXECUTABLE`, and optional `PROCESSOR_TIMEOUT`.
+
+## Browser tools
+
+- Download the packaged Manifest V3 extension from `/downloads/termsinator-extension.zip` on the deployed site.
+- Extension source lives in [`extension/`](extension/).
+- The `/api-key/` page provides the keyless public lookup endpoint and bookmarklet.
+- Automatic extension lookup is opt-in and sends only hostnames.
 
 ## Documentation
 

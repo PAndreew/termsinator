@@ -52,6 +52,10 @@ jobs:
           PYTHONPATH=processor python -m unittest discover -s processor/tests -v
       - name: Frontend install
         run: pnpm --dir frontend install --frozen-lockfile
+      - name: Package and validate extension
+        run: |
+          scripts/package-extension.sh
+          unzip -t frontend/public/downloads/termsinator-extension.zip
       - name: Frontend check and build
         run: pnpm --dir frontend build
       - name: Validate JSON contracts

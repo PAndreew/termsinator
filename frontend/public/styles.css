@@ -8,9 +8,11 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; }
+.preview-banner { padding: 9px 16px; background: #eff7ee; border-bottom: 1px solid #b8d5b5; color: #234d21; font-size: 14px; text-align: center; }
 header, main, footer { width: min(760px, calc(100% - 32px)); margin: 0 auto; }
 header { padding: 28px 0 16px; border-bottom: 1px solid #ddd; }
-.brand { color: #111; font-size: 20px; font-weight: 700; text-decoration: none; }
+.brand { display: inline-flex; align-items: center; gap: 8px; color: #111; font-size: 20px; font-weight: 700; text-decoration: none; }
+.brand img { display: block; width: 38px; height: 29px; object-fit: contain; }
 nav { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px; }
 a { color: #0645ad; }
 main { min-height: 70vh; padding: 36px 0 64px; }
@@ -26,6 +28,8 @@ input, button, select { border: 1px solid #aaa; border-radius: 0; padding: 10px 
 input { flex: 1; min-width: 0; }
 button { color: #fff; background: #111; border-color: #111; cursor: pointer; }
 button:disabled { opacity: .6; cursor: default; }
+.button-link { display: inline-block; margin: 4px 8px 4px 0; padding: 9px 12px; color: #fff; background: #111; text-decoration: none; }
+pre { max-width: 100%; padding: 12px; overflow-x: auto; background: #f5f5f5; border: 1px solid #ddd; }
 .status { margin: 20px 0; padding: 12px 0; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; }
 .status:empty { display: none; }
 .muted, footer { color: #666; font-size: 14px; }

@@ -1,0 +1,36 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="API keys and browser tools">
+  <h1>API keys and browser tools</h1>
+
+  <h2>Create an API key</h2>
+  <p>Public report lookups do not require an API key during the community preview. URL submission is also anonymous. Keys for bulk access and higher limits are not issued yet because a browser-visible key would not protect the service.</p>
+  <button type="button" disabled>API key creation coming later</button>
+  <p class="muted">When managed API access launches, keys will be shown once, stored only as hashes, scoped, rate-limited, and revocable.</p>
+
+  <h2>Public lookup API</h2>
+  <pre><code>GET https://termsinator.46-62-240-211.sslip.io/api/v1/sites/example.com/summary</code></pre>
+  <p>The endpoint returns only published report data. Public read responses allow cross-origin access for the bookmarklet.</p>
+
+  <h2>Bookmarklet</h2>
+  <p>Drag this link to your bookmarks bar. Clicking it sends only the current hostname to Termsinator and shows a small result panel on the page. Some websites block bookmarklets through their security policy.</p>
+  <p><a id="bookmarklet" class="button-link" href="#">Check with Termsinator</a></p>
+
+  <h2>Browser extension</h2>
+  <p>The Manifest V3 extension defaults to click-only lookup. Automatic hostname checks and the small page overlay require explicit opt-in. It never sends paths, page titles, or page content.</p>
+  <p><a class="button-link" href="/downloads/termsinator-extension.zip" download>Download extension</a> <a href="https://github.com/PAndreew/termsinator/tree/service-poc/extension" target="_blank" rel="noreferrer">View source on GitHub</a></p>
+  <ol>
+    <li>Download and unzip the file.</li>
+    <li>Open the browser's extensions page and enable developer mode.</li>
+    <li>Choose “Load unpacked” and select the unzipped folder.</li>
+  </ol>
+
+  <script is:inline type="module">
+    const link = document.querySelector('#bookmarklet');
+    fetch('/bookmarklet.js')
+      .then(response => response.text())
+      .then(source => { if (link) link.href = `javascript:${source.trim()}`; })
+      .catch(() => { if (link) link.textContent = 'Bookmarklet unavailable'; });
+  </script>
+</Base>

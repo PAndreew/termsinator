@@ -21,3 +21,13 @@ printf '%s' '{"id":"<uuid>","url":"https://example.com"}' | \
 ```
 
 The executable contract still receives `{id,url}` on stdin and emits one JSON object on stdout. Diagnostics go to stderr. The production processing profile remains disabled until benchmark quality gates are met.
+
+For the community-preview workflow, save the local output and publish it through the validated maintainer-only SSH path:
+
+```bash
+scripts/list-queue.sh
+# Run the processor with the queued request id and URL, save stdout, then:
+scripts/publish-report.sh /path/to/result.json
+```
+
+The script validates both public schemas, checks hostname consistency, reuses a queued job when available, and writes to PostgreSQL without exposing a public publication endpoint.

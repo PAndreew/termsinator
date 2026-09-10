@@ -83,6 +83,9 @@ func TestCompletedProcessingPublishesHostnameSummary(t *testing.T) {
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("summary status=%d, want 200", response.StatusCode)
 	}
+	if response.Header.Get("Access-Control-Allow-Origin") != "*" {
+		t.Fatal("public summary must allow bookmarklet reads")
+	}
 	var result struct {
 		Hostname string `json:"hostname"`
 	}
