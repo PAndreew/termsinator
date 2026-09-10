@@ -77,15 +77,28 @@ Select the current bundle independently of its score:
 
 The score cannot influence which policy revision becomes current.
 
+## Public letter grades
+
+The weighted numeric result remains an internal calculation for aggregation and diagnostics. Public surfaces use broad grades so that small, model-sensitive differences do not look more precise than they are:
+
+- A: 85–100
+- B: 70–84.9
+- C: 50–69.9
+- D: 30–49.9
+- E: below 30
+- Ungraded: insufficient evidence
+
+Critical-risk caps apply before conversion to a grade. A grade reduces false precision; it does not improve source quality or model reliability. Reports therefore retain evidence coverage, citations, model identities, and disagreements.
+
 ## Public presentation
 
 The site report starts with:
 
-- aggregate verdict and median-derived score;
+- aggregate verdict and median-derived letter grade;
 - `service_processed` or `single_model` provenance label;
 - policy revision date/hash and matrix version;
 - number and names of included models;
-- score range and disagreement count;
+- grade range and disagreement count;
 - top consensus risks, minority warnings, and actions.
 
 Then show a criterion comparison table and one expandable card per evaluation containing model/provider, model version, harness/version, date, score, verdict, coverage, reasoning, and citations. Excluded evaluations remain listed with the exclusion reason.

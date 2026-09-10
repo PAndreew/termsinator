@@ -7,8 +7,13 @@ import Base from '../layouts/Base.astro';
   <form id="filters">
     <select id="offering" aria-label="Offering type"><option value="">All offering types</option></select>
     <select id="sector" aria-label="Sector"><option value="">All sectors</option></select>
+    <select id="grade" aria-label="Letter grade">
+      <option value="">All grades</option>
+      <option value="A">Grade A</option><option value="B">Grade B</option>
+      <option value="C">Grade C</option><option value="D">Grade D</option><option value="E">Grade E</option>
+    </select>
     <select id="sort" aria-label="Sort order">
-      <option value="score">Highest score</option>
+      <option value="score">Highest grade</option>
       <option value="date">Newest analysis</option>
       <option value="name">Name</option>
     </select>
@@ -23,6 +28,7 @@ import Base from '../layouts/Base.astro';
     const target = document.querySelector('#analyses');
     const offering = document.querySelector('#offering');
     const sector = document.querySelector('#sector');
+    const grade = document.querySelector('#grade');
     const sort = document.querySelector('#sort');
 
     fetch('/api/v1/categories').then(response => response.json()).then(data => {
@@ -34,7 +40,7 @@ import Base from '../layouts/Base.astro';
       }
     }).catch(() => {});
 
-    for (const control of [offering, sector, sort]) control?.addEventListener('change', load);
+    for (const control of [offering, sector, grade, sort]) control?.addEventListener('change', load);
     load();
 
     async function load() {
@@ -43,6 +49,7 @@ import Base from '../layouts/Base.astro';
       const params = new URLSearchParams();
       if (offering?.value) params.set('offering_type', offering.value);
       if (sector?.value) params.set('sector', sector.value);
+      if (grade?.value) params.set('grade', grade.value);
       const endpoint = params.size ? `/api/v1/rankings?${params}` : '/api/v1/analyses';
       try {
         const response = await fetch(endpoint);

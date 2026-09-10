@@ -31,12 +31,19 @@ if (!hostname) {
       result.innerHTML = `<strong>No report yet for ${escapeHTML(hostname)}</strong><p><a target="_blank" href="https://termsinator.46-62-240-211.sslip.io/?url=${encodeURIComponent(tab.url)}">Request analysis →</a></p>`;
     } else {
       const risks = (summary.top_risks || []).map(r => `<div class="risk">${escapeHTML(r.title)}</div>`).join('');
-      result.innerHTML = `<div class="quiet">${escapeHTML(hostname)}</div><div class="score">${summary.aggregate.score ?? '—'}</div><strong>${escapeHTML(summary.aggregate.verdict.replaceAll('_',' '))}</strong><p class="models">${summary.aggregate.model_count} model(s) · ${summary.consensus.polarized} polarized criteria</p>${risks}`;
+      const grade = letterGrade(summary.aggregate.score, summary.aggregate.grade, summary.aggregate.verdict);
+      result.innerHTML = `<div class="quiet">${escapeHTML(hostname)}</div><div class="score grade-${grade?.toLowerCase() || 'na'}">${grade || 'Not graded'}</div><strong>${escapeHTML(summary.aggregate.verdict.replaceAll('_',' '))}</strong><p class="models">${summary.aggregate.model_count} model(s) · ${summary.consensus.polarized} polarized criteria</p>${risks}`;
       full.href = summary.full_report_url;
     }
   } catch (error) {
     result.textContent = error instanceof Error ? error.message : 'Lookup failed';
   }
+}
+
+function letterGrade(score, grade, verdict) {
+  if (verdict === 'insufficient_evidence' || score == null) return null;
+  if (['A', 'B', 'C', 'D', 'E'].includes(grade)) return grade;
+  if (score >= 85) return 'A'; if (score >= 70) return 'B'; if (score >= 50) return 'C'; if (score >= 30) return 'D'; return 'E';
 }
 
 function setDisclosure(automatic) {

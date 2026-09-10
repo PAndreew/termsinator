@@ -155,6 +155,11 @@ func (s *Server) rankings(w http.ResponseWriter, r *http.Request) {
 	offering := r.URL.Query().Get("offering_type")
 	sector := r.URL.Query().Get("sector")
 	subcategory := r.URL.Query().Get("subcategory")
+	grade := strings.ToUpper(r.URL.Query().Get("grade"))
+	if grade != "" && (len(grade) != 1 || !strings.Contains("ABCDE", grade)) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grade"})
+		return
+	}
 	rows, err := s.db.QueryContext(r.Context(), `
 SELECT summary FROM (
   SELECT DISTINCT ON (ar.hostname) po.payload->'summary' AS summary, po.created_at
@@ -165,10 +170,16 @@ SELECT summary FROM (
     AND ($3='' OR po.payload#>>'{summary,classification,subcategory}'=$3)
     AND COALESCE(po.payload#>>'{summary,classification,confidence}','low') IN ('medium','high')
     AND po.payload#>>'{summary,aggregate,score}' IS NOT NULL
+    AND ($4='' OR CASE
+      WHEN (po.payload#>>'{summary,aggregate,score}')::numeric >= 85 THEN 'A'
+      WHEN (po.payload#>>'{summary,aggregate,score}')::numeric >= 70 THEN 'B'
+      WHEN (po.payload#>>'{summary,aggregate,score}')::numeric >= 50 THEN 'C'
+      WHEN (po.payload#>>'{summary,aggregate,score}')::numeric >= 30 THEN 'D'
+      ELSE 'E' END = $4)
   ORDER BY ar.hostname, po.created_at DESC
 ) current
 ORDER BY (summary#>>'{aggregate,score}')::numeric DESC, summary->>'hostname'
-LIMIT 100`, offering, sector, subcategory)
+LIMIT 100`, offering, sector, subcategory, grade)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "request_failed"})
 		return
@@ -188,7 +199,8 @@ LIMIT 100`, offering, sector, subcategory)
 		return
 	}
 	w.Header().Set("Cache-Control", "public, max-age=300")
-	writeJSON(w, http.StatusOK, map[string]any{"offering_type": offering, "sector": sector, "subcategory": subcategory, "results": results})
+	writeJSON(w, http.StatusOK, map[string]any{"offering_type": offering, "sector": sector,
+		"subcategory": subcategory, "grade": grade, "results": results})
 }
 
 func (s *Server) categories(w http.ResponseWriter, r *http.Request) {

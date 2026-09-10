@@ -38,6 +38,7 @@
       "properties": {
         "trust": { "enum": ["service_processed", "single_model"] },
         "score": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "grade": { "type": ["string", "null"], "enum": ["A", "B", "C", "D", "E", null] },
         "verdict": { "enum": ["user_respecting", "low_concern", "caution", "high_concern", "severe_concern", "insufficient_evidence"] },
         "model_count": { "type": "integer", "minimum": 1 }
       }
@@ -75,6 +76,7 @@
           "included_in_aggregate": { "type": "boolean" },
           "exclusion_reason": { "type": ["string", "null"], "maxLength": 300 },
           "score": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+          "grade": { "type": ["string", "null"], "enum": ["A", "B", "C", "D", "E", null] },
           "verdict": { "enum": ["user_respecting", "low_concern", "caution", "high_concern", "severe_concern", "insufficient_evidence"] },
           "coverage": { "type": "number", "minimum": 0, "maximum": 1 },
           "evaluated_at": { "type": "string", "format": "date-time" }

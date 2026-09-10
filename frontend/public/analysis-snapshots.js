@@ -8,6 +8,22 @@ function label(value) {
   return String(value || '').replaceAll('_', ' ');
 }
 
+function gradeFor(score, explicitGrade, verdict) {
+  if (verdict === 'insufficient_evidence' || score == null) return null;
+  if (['A', 'B', 'C', 'D', 'E'].includes(explicitGrade)) return explicitGrade;
+  if (score >= 85) return 'A';
+  if (score >= 70) return 'B';
+  if (score >= 50) return 'C';
+  if (score >= 30) return 'D';
+  return 'E';
+}
+
+function gradeBadge(grade, extraClass = '') {
+  return grade
+    ? `<span class="grade grade-${grade.toLowerCase()} ${extraClass}" aria-label="Grade ${grade}">${grade}</span>`
+    : `<span class="grade grade-na ${extraClass}">Not graded</span>`;
+}
+
 function sourceLink(url, text = 'Source') {
   try {
     const parsed = new URL(url);
@@ -24,11 +40,11 @@ function snapshot(summary) {
   const sourceDate = summary.policy_revision?.source_date
     ? new Date(summary.policy_revision.source_date).toLocaleDateString()
     : 'Unknown date';
-  const score = aggregate.score == null ? 'Not scored' : `${aggregate.score}/100`;
+  const grade = gradeFor(aggregate.score, aggregate.grade, aggregate.verdict);
   return `<details class="analysis" data-hostname="${encodeURIComponent(String(summary.hostname || ''))}">
     <summary class="analysis-summary">
       <strong>${escapeHTML(summary.hostname)}</strong>
-      <span class="score">${escapeHTML(score)}</span>
+      ${gradeBadge(grade, 'score')}
       <span>${escapeHTML(label(aggregate.verdict || 'insufficient_evidence'))}</span>
       <span>${escapeHTML(label(classification.subcategory || classification.offering_type || 'unclassified'))}</span>
       <span>${escapeHTML(sourceDate)}</span>
@@ -54,21 +70,22 @@ function reportHTML(report, summary) {
 
   const evaluationRows = evaluations.map(evaluation => `<tr>
     <td>${escapeHTML(evaluation.model || 'Unknown model')}</td>
-    <td>${evaluation.score == null ? '—' : `${escapeHTML(evaluation.score)}/100`}</td>
+    <td>${gradeBadge(gradeFor(evaluation.score, evaluation.grade, evaluation.verdict))}</td>
     <td>${escapeHTML(label(evaluation.verdict || 'insufficient_evidence'))}</td>
     <td>${Math.round(Number(evaluation.coverage || 0) * 100)}%</td>
   </tr>`).join('');
 
   const categoryRows = categories.map(category => `<tr>
     <th scope="row">${escapeHTML(category.category_id)}</th>
-    <td>${category.score == null ? '—' : `${escapeHTML(category.score)}/100`}</td>
+    <td>${gradeBadge(gradeFor(category.score, category.grade, category.score == null ? 'insufficient_evidence' : ''))}</td>
     <td>${Math.round(Number(category.coverage || 0) * 100)}%</td>
   </tr>`).join('');
 
   const criterionSections = assessments.map(item => {
     const citations = (item.citations || []).map(citation => citationHTML(citation, documents)).join('');
+    const criterionGrade = item.score == null ? null : ['E', 'D', 'C', 'B', 'A'][item.score];
     return `<details class="criterion">
-      <summary><strong>${escapeHTML(item.criterion_id)}</strong> · ${item.score == null ? 'not scored' : `${escapeHTML(item.score)}/4`} · ${escapeHTML(label(item.evidence_status))}</summary>
+      <summary><strong>${escapeHTML(item.criterion_id)}</strong> · ${gradeBadge(criterionGrade)} · ${escapeHTML(label(item.evidence_status))}</summary>
       <p>${escapeHTML(item.summary || '')}</p>
       ${item.reasoning && item.reasoning !== item.summary ? `<p class="muted">${escapeHTML(item.reasoning)}</p>` : ''}
       ${citations || '<p class="muted">No supporting citation.</p>'}
@@ -86,7 +103,7 @@ function reportHTML(report, summary) {
     </div>
     ${evaluations.length ? `<h3>Model evaluations</h3>
       <table><thead><tr><th>Model</th><th>Score</th><th>Verdict</th><th>Evidence</th></tr></thead><tbody>${evaluationRows}</tbody></table>
-      <p class="muted">Score range: ${consensus.score_min ?? '—'}–${consensus.score_max ?? '—'}; polarized criteria: ${consensus.polarized ?? 0}; applicability disagreements: ${consensus.applicability_disagreements ?? 0}.</p>` : ''}
+      <p class="muted">Grade range: ${gradeFor(consensus.score_min) || '—'}–${gradeFor(consensus.score_max) || '—'}; polarized criteria: ${consensus.polarized ?? 0}; applicability disagreements: ${consensus.applicability_disagreements ?? 0}.</p>` : ''}
     <h3>Category snapshot</h3>
     <table><thead><tr><th>Category</th><th>Score</th><th>Evidence</th></tr></thead><tbody>${categoryRows}</tbody></table>
     ${flags.length ? `<h3>Critical findings</h3><ul class="report-list">${flagSections}</ul>` : '<h3>Critical findings</h3><p>None identified.</p>'}

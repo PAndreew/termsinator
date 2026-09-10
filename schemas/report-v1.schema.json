@@ -215,6 +215,7 @@
       "properties": {
         "category_id": { "enum": ["DCP", "SST", "RSR", "CIA", "CTA", "PRL", "DGT", "TAV"] },
         "score": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "grade": { "type": ["string", "null"], "enum": ["A", "B", "C", "D", "E", null] },
         "coverage": { "type": "number", "minimum": 0, "maximum": 1 }
       }
     },
@@ -225,6 +226,7 @@
       "properties": {
         "raw": { "type": "number", "minimum": 0, "maximum": 100 },
         "capped": { "type": "number", "minimum": 0, "maximum": 100 },
+        "grade": { "type": ["string", "null"], "enum": ["A", "B", "C", "D", "E", null] },
         "coverage": { "type": "number", "minimum": 0, "maximum": 1 },
         "low_confidence_weight": { "type": "number", "minimum": 0, "maximum": 1 },
         "categories": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "$ref": "#/$defs/categoryScore" } }

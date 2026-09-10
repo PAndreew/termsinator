@@ -38,6 +38,7 @@ class EvaluatorTest(unittest.TestCase):
         self.assertIsNone(output["report"]["assessments"][0]["score"])
         self.assertEqual(output["summary"]["aggregate"]["verdict"], "insufficient_evidence")
         self.assertIsNone(output["summary"]["aggregate"]["score"])
+        self.assertIsNone(output["summary"]["aggregate"]["grade"])
         root = Path(__file__).parents[2]
         for name, value in [("report-v1.schema.json", output["report"]), ("public-summary-v1.schema.json", output["summary"])]:
             schema = json.loads((root / "schemas" / name).read_text())
@@ -61,6 +62,10 @@ class EvaluatorTest(unittest.TestCase):
         self.assertIsNone(assessment["score"])
         self.assertEqual(assessment["evidence_status"], "not_found")
         self.assertEqual(assessment["citations"], [])
+
+    def test_letter_grades_use_broad_public_bands(self):
+        evaluator = Evaluator()
+        self.assertEqual([evaluator._grade(score) for score in (95, 80, 60, 40, 20)], ["A", "B", "C", "D", "E"])
 
     def test_insufficient_evidence_verdict_explains_the_threshold(self):
         assessments = [Evaluator()._assessment(criterion_id, None, {}) for criterion_id in CRITERION_IDS]

@@ -190,6 +190,7 @@ NUMBERED EVIDENCE PASSAGES:
         top_actions = [{"title": item["title"], "model_support": 1, "criterion_ids": item["criterion_ids"]}
                        for item in actions[:3]]
         public_score = None if verdict["label"] == "insufficient_evidence" else score["capped"]
+        public_grade = None if public_score is None else self._grade(public_score)
         summary = {
             "schema_version": "1.0.0", "hostname": discovery.hostname,
             "classification": {"taxonomy_version": "1.0.0", "offering_type": classification["primary_offering_type"],
@@ -197,14 +198,15 @@ NUMBERED EVIDENCE PASSAGES:
                                "confidence": classification["confidence"],
                                "facets": classification["monetization"] + classification["relationship_facets"]},
             "policy_revision": {"bundle_id": bundle_id, "source_date": now, "matrix_version": "1.0.0"},
-            "aggregate": {"trust": "single_model", "score": public_score, "verdict": verdict["label"], "model_count": 1},
+            "aggregate": {"trust": "single_model", "score": public_score, "grade": public_grade,
+                          "verdict": verdict["label"], "model_count": 1},
             "consensus": {"score_min": public_score, "score_max": public_score, "unanimous": 0,
                           "close": 0, "mixed": 0, "polarized": 0, "applicability_disagreements": 0,
                           "critical_flag_disagreements": 0},
             "evaluations": [{"evaluation_id": request_id, "provider": "openrouter", "model": self.model_id,
                              "model_version": None, "harness": "smolagents-bounded", "harness_version": "1.26.0",
                              "trust_tier": "service_processed", "included_in_aggregate": True, "exclusion_reason": None,
-                             "score": public_score, "verdict": verdict["label"], "coverage": score["coverage"],
+                             "score": public_score, "grade": public_grade, "verdict": verdict["label"], "coverage": score["coverage"],
                              "evaluated_at": now}],
             "top_risks": top_risks, "top_actions": top_actions,
             "full_report_url": f"https://termsinator.46-62-240-211.sslip.io/analyses#{discovery.hostname}",
@@ -380,7 +382,10 @@ NUMBERED EVIDENCE PASSAGES:
                 if item["score"] is not None: points += item["score"] / 4 * weight
             category_score = points / denominator * 100 if denominator else None
             coverage = category_coverage / denominator if denominator else 0
-            categories.append({"category_id": category, "score": round(category_score, 1) if category_score is not None else None, "coverage": round(coverage, 4)})
+            rounded_category_score = round(category_score, 1) if category_score is not None else None
+            categories.append({"category_id": category, "score": rounded_category_score,
+                               "grade": self._grade(rounded_category_score) if rounded_category_score is not None else None,
+                               "coverage": round(coverage, 4)})
             if category_score is not None:
                 weighted_total += category_score * CATEGORY_WEIGHTS[category]
                 applicable_categories += CATEGORY_WEIGHTS[category]
@@ -400,10 +405,20 @@ NUMBERED EVIDENCE PASSAGES:
             rationale = "Calculated from the versioned matrix, evidence coverage, confidence, and critical flags."
         cap_scores = {"user_respecting": 100, "low_concern": 84.9, "caution": 69.9, "high_concern": 49.9, "severe_concern": 29.9, "insufficient_evidence": raw}
         capped = min(raw, cap_scores[label]) if label != "insufficient_evidence" else raw
-        return {"raw": raw, "capped": round(capped, 1), "coverage": round(coverage, 4),
+        rounded_capped = round(capped, 1)
+        return {"raw": raw, "capped": rounded_capped,
+                "grade": None if label == "insufficient_evidence" else self._grade(rounded_capped),
+                "coverage": round(coverage, 4),
                 "low_confidence_weight": round(low_fraction, 4), "categories": categories,
                 "verdict": {"label": label, "headline": label.replace("_", " ").title(),
                             "rationale": rationale}}
+
+    def _grade(self, score):
+        if score >= 85: return "A"
+        if score >= 70: return "B"
+        if score >= 50: return "C"
+        if score >= 30: return "D"
+        return "E"
 
     def _verdict(self, score):
         if score >= 85: return "user_respecting"

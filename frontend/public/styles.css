@@ -19,6 +19,9 @@ h2 { margin-top: 36px; font-size: 22px; }
 h3 { font-size: 17px; }
 p, li { max-width: 70ch; }
 form { display: flex; gap: 8px; margin: 24px 0; }
+.submit-form { width: min(620px, 100%); margin: 24px auto; }
+.ranking-filters { align-items: center; justify-content: flex-end; margin: 16px 0; }
+.ranking-filters label { color: #666; font-size: 14px; }
 input, button, select { border: 1px solid #aaa; border-radius: 0; padding: 10px 12px; font: inherit; background: #fff; }
 input { flex: 1; min-width: 0; }
 button { color: #fff; background: #111; border-color: #111; cursor: pointer; }
@@ -46,7 +49,14 @@ blockquote { margin: 12px 0; padding: 10px 14px; border-left: 2px solid #aaa; co
 blockquote cite { display: block; margin-top: 6px; font-style: normal; }
 .report-list > li { margin-bottom: 14px; }
 .meta { display: flex; flex-wrap: wrap; gap: 12px; color: #666; font-size: 14px; }
-.score { color: #111; font-weight: 700; }
+.score { font-weight: 700; }
+.grade { display: inline-block; min-width: 2em; padding: 2px 7px; border: 1px solid currentColor; font-weight: 750; line-height: 1.25; text-align: center; }
+.grade-a { color: #176b32 !important; background: #e1f3e5; }
+.grade-b { color: #07599c !important; background: #e2f0ff; }
+.grade-c { color: #765600 !important; background: #fff3cd; }
+.grade-d { color: #963d00 !important; background: #ffe4cf; }
+.grade-e { color: #8b1e27 !important; background: #f8dadd; }
+.grade-na { color: #555 !important; background: #eee; min-width: auto; }
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 8px 6px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
 footer { border-top: 1px solid #ddd; padding: 18px 0 40px; }
@@ -54,6 +64,10 @@ footer { border-top: 1px solid #ddd; padding: 18px 0 40px; }
 @media (max-width: 560px) {
   form { display: block; }
   form button { width: 100%; margin-top: 8px; }
+  .submit-form { width: calc(100% - 16px); margin: 24px 8px; }
+  .submit-form input { width: 100%; }
+  .ranking-filters label { display: block; margin-bottom: 6px; }
+  .ranking-filters select { width: 100%; }
   .analysis-summary strong { width: 100%; }
   .analysis-report { padding-left: 4px; overflow-x: auto; }
 }

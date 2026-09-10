@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 ---
 <Base title="Termsinator">
   <h1>Analyse terms and privacy policies</h1>
-  <form id="analyse">
+  <form id="analyse" class="submit-form">
     <label style="position:absolute;left:-9999px" for="url">Website URL</label>
     <input id="url" name="url" type="url" required placeholder="https://example.com" autocomplete="url" />
     <button type="submit">Submit</button>
@@ -13,6 +13,14 @@ import Base from '../layouts/Base.astro';
   <section class="analysed-policies" aria-labelledby="analysed-heading">
     <h2 id="analysed-heading">Analysed policies</h2>
     <p class="muted">Open a snapshot to read its complete criterion-by-criterion analysis and citations.</p>
+    <form class="ranking-filters" id="homepage-filters">
+      <label for="homepage-grade">Filter ranking</label>
+      <select id="homepage-grade">
+        <option value="">All grades</option>
+        <option value="A">Grade A</option><option value="B">Grade B</option>
+        <option value="C">Grade C</option><option value="D">Grade D</option><option value="E">Grade E</option>
+      </select>
+    </form>
     <div id="homepage-analyses" aria-live="polite">Loading…</div>
   </section>
 
@@ -62,14 +70,22 @@ import Base from '../layouts/Base.astro';
   <script is:inline type="module">
     import { renderAnalyses } from '/analysis-snapshots.js';
     const target = document.querySelector('#homepage-analyses');
-    if (target) {
-      fetch('/api/v1/analyses')
-        .then(response => {
-          if (!response.ok) throw new Error('Could not load analysed policies.');
-          return response.json();
-        })
-        .then(data => renderAnalyses(target, data.results || []))
-        .catch(error => { target.textContent = error.message || 'Could not load analysed policies.'; });
+    const grade = document.querySelector('#homepage-grade');
+    grade?.addEventListener('change', loadAnalyses);
+    loadAnalyses();
+
+    async function loadAnalyses() {
+      if (!target) return;
+      target.textContent = 'Loading…';
+      const endpoint = grade?.value ? `/api/v1/rankings?grade=${encodeURIComponent(grade.value)}` : '/api/v1/analyses';
+      try {
+        const response = await fetch(endpoint);
+        if (!response.ok) throw new Error('Could not load analysed policies.');
+        const data = await response.json();
+        renderAnalyses(target, data.results || []);
+      } catch (error) {
+        target.textContent = error.message || 'Could not load analysed policies.';
+      }
     }
   </script>
 </Base>

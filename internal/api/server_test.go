@@ -150,7 +150,7 @@ func TestRankingsFilterComparableOfferingTypes(t *testing.T) {
 		if _, err = db.Exec(`INSERT INTO jobs(id,analysis_request_id,status) VALUES($1,$2,'complete')`, jobID, requestID); err != nil {
 			t.Fatal(err)
 		}
-		payload := fmt.Sprintf(`{"summary":{"hostname":%q,"classification":{"offering_type":%q,"sector":"business_software","subcategory":"productivity","confidence":"high","taxonomy_version":"1.0.0","facets":[]},"aggregate":{"score":%d,"verdict":"low_concern","model_count":2},"policy_revision":{"source_date":"2026-09-07T00:00:00Z"}}}`, host, offering, 80-index)
+		payload := fmt.Sprintf(`{"summary":{"hostname":%q,"classification":{"offering_type":%q,"sector":"business_software","subcategory":"productivity","confidence":"high","taxonomy_version":"1.0.0","facets":[]},"aggregate":{"score":%d,"verdict":"low_concern","model_count":2},"policy_revision":{"source_date":"2026-09-07T00:00:00Z"}}}`, host, offering, 90-index*30)
 		if _, err = db.Exec(`INSERT INTO processing_outputs(job_id,analysis_request_id,payload) VALUES($1,$2,$3)`, jobID, requestID, payload); err != nil {
 			t.Fatal(err)
 		}
@@ -173,6 +173,20 @@ func TestRankingsFilterComparableOfferingTypes(t *testing.T) {
 	}
 	if len(result.Results) != 1 || result.Results[0].Hostname != "ranking-0.example" {
 		t.Fatalf("ranking results=%+v", result.Results)
+	}
+	response.Body.Close()
+
+	response, err = http.Get(server.URL + "/v1/rankings?grade=A")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	result.Results = nil
+	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Results) != 1 || result.Results[0].Hostname != "ranking-0.example" {
+		t.Fatalf("grade A ranking results=%+v", result.Results)
 	}
 }
 
