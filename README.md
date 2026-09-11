@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/public/termsinator.svg" alt="Termsinator logo" width="120" />
+</p>
+
 # Termsinator
 
 Termsinator is a public registry of LLM-performed analyses of public legal documents, like ToSs, Privacy policies, Cookie policies, etc. The goal of this project is to help people better understand how their data will be used, and what potential pitfalls they need to avoid. The results can be accessed through the website and through a browser extension that uses the keyless public API during the community preview. You can download it from the [latest GitHub release](https://github.com/PAndreew/termsinator/releases/latest).
