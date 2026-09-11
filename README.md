@@ -1,10 +1,10 @@
 # Termsinator
 
-Evidence-backed, multi-model risk assessments of public terms and privacy policies.
+Termsinator is a public registry of LLM-performed analyses of public legal documents, like ToSs, Privacy policies, Cookie policies, etc. The goal of this project is to help people better understand how their data will be used, and what potential pitfalls they need to avoid. The results can be accessed through the website and through a browser extension that uses the keyless public API during the community preview. You can download it from the [latest GitHub release](https://github.com/PAndreew/termsinator/releases/latest).
+
+**Disclaimer! This is not legal advice!** The LLM can—and will—make mistakes. Also, due to the complexity and regional differences of these legal documents, it is often tricky to decide how worrisome different claims are.
 
 **Live POC:** https://termsinator.46-62-240-211.sslip.io
-
-Termsinator is a risk-screening tool, not legal advice.
 
 ## Current capabilities
 
